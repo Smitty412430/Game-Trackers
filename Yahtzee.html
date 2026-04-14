@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yahtzee Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080806;
+  --surface:#111109;
+  --surface2:#1a1a10;
+  --surface3:#222218;
+  --surface4:#2c2c20;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.11);
+  --border3:rgba(255,255,255,0.18);
+  --text:#f5f0e8;
+  --muted:#8a8570;
+  --amber:#d4862a;
+  --amber2:#f0a83c;
+  --amber3:#ffd080;
+  --copper:#b87333;
+  --cream:#f5e8c8;
+  --red:#e05050;
+  --green:#5aaa6a;
+  --dice:#f5f0e8;
+  --radius:14px;
+  --font-head:'Playfair Display',serif;
+  --font:'Source Sans 3',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 20%,rgba(212,134,42,0.09) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 80%,rgba(184,115,51,0.07) 0%,transparent 50%);
+  pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 20px 80px;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+.logo{display:flex;align-items:center;gap:16px;}
+.dice-logo{display:grid;grid-template-columns:1fr 1fr;gap:3px;width:44px;height:44px;}
+.die{background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-text{}
+.logo-title{font-family:var(--font-head);font-size:42px;letter-spacing:2px;line-height:1;color:var(--amber2);}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.nav{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:5px;flex-wrap:wrap;}
+.nav button{font-family:var(--font);font-size:12px;font-weight:600;letter-spacing:.5px;padding:8px 16px;border:none;border-radius:30px;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);text-transform:uppercase;}
+.nav button.active{background:var(--surface4);color:var(--amber2);box-shadow:0 2px 8px rgba(0,0,0,.5);}
+.nav button:hover:not(.active){color:var(--text);}
+
+.panel{display:none;}.panel.active{display:block;}
+
+/* Buttons */
+.btn{font-family:var(--font);font-size:12px;font-weight:700;padding:10px 20px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;letter-spacing:.5px;text-transform:uppercase;}
+.btn-amber{background:var(--amber);color:#1a1000;}.btn-amber:hover{background:var(--amber2);transform:translateY(-1px);}
+.btn-green{background:rgba(90,170,106,.15);color:var(--green);border:1px solid rgba(90,170,106,.3);}.btn-green:hover{background:rgba(90,170,106,.25);}
+.btn-red{background:rgba(224,80,80,.12);color:var(--red);border:1px solid rgba(224,80,80,.28);}.btn-red:hover{background:rgba(224,80,80,.22);}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}.btn-muted:hover{background:var(--surface4);}
+.btn-sm{font-size:11px;padding:6px 14px;}
+.icon-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid var(--border2);background:var(--surface3);color:var(--muted);cursor:pointer;font-size:13px;transition:all .15s;flex-shrink:0;}
+.icon-btn:hover{color:var(--text);}
+
+/* Inputs */
+.text-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:15px;font-weight:500;outline:none;transition:border-color .15s;border-radius:40px;padding:11px 20px;flex:1;}
+.text-input:focus{border-color:var(--amber);}
+.text-input::placeholder{color:var(--muted);}
+.modal-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:15px;outline:none;transition:border-color .15s;border-radius:10px;padding:10px 14px;width:100%;}
+.modal-input:focus{border-color:var(--amber);}
+
+/* Top bar */
+.top-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:18px;margin-bottom:20px;flex-wrap:wrap;}
+.tstat{text-align:center;min-width:48px;}
+.tstat-val{font-family:var(--font-head);font-size:24px;color:var(--amber2);line-height:1;}
+.tstat-lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;font-weight:600;}
+.tstat-div{width:1px;height:28px;background:var(--border2);}
+.top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+
+/* Add player */
+.add-player-form{display:flex;gap:10px;margin-bottom:20px;}
+
+/* Leaderboard */
+.lb-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;}
+.lb-head{display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);gap:10px;}
+.lb-head-title{font-family:var(--font-head);font-size:17px;color:var(--amber2);flex:1;letter-spacing:.5px;}
+.lb-table{width:100%;border-collapse:collapse;font-size:13px;}
+.lb-table th{text-align:left;padding:8px 14px;font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-transform:uppercase;}
+.lb-table td{padding:10px 14px;border-bottom:1px solid var(--border);}
+.lb-table tr:last-child td{border-bottom:none;}
+.lb-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;flex-shrink:0;}
+.lb-name{font-weight:700;font-size:14px;}
+.lb-total{font-family:var(--font-head);font-size:22px;color:var(--amber2);}
+.lb-bonus-pip{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-left:4px;vertical-align:middle;}
+
+/* Scorecard grid */
+.scorecards-wrap{margin-bottom:20px;}
+.scorecards-title{font-family:var(--font-head);font-size:18px;color:var(--amber2);margin-bottom:12px;letter-spacing:.5px;}
+.scorecards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.scorecard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.scorecard-header{padding:12px 16px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:10px;background:var(--surface2);}
+.sc-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:14px;flex-shrink:0;}
+.sc-name{font-weight:700;font-size:14px;flex:1;}
+.sc-total{font-family:var(--font-head);font-size:20px;color:var(--amber2);}
+.sc-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);padding:8px 16px 4px;background:rgba(212,134,42,0.04);border-top:1px solid var(--border);}
+.sc-row{display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--border);min-height:38px;gap:8px;transition:background .15s;}
+.sc-row:hover{background:var(--surface2);}
+.sc-row.scored{background:rgba(212,134,42,0.03);}
+.sc-row.bonus-row{background:rgba(90,170,106,0.05);border-color:rgba(90,170,106,0.15);}
+.sc-row.yahtzee-bonus-row{background:rgba(212,134,42,0.06);}
+.sc-label{flex:1;font-size:12px;font-weight:600;color:var(--text);}
+.sc-label-hint{font-size:10px;color:var(--muted);font-weight:400;display:block;}
+.sc-score-input{width:52px;height:28px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;color:var(--amber2);font-family:var(--font-head);font-size:15px;text-align:center;outline:none;transition:border-color .15s;}
+.sc-score-input:focus{border-color:var(--amber);}
+.sc-score-input:disabled{opacity:0.5;cursor:not-allowed;}
+.sc-score-display{font-family:var(--font-head);font-size:16px;color:var(--amber2);min-width:52px;text-align:right;}
+.sc-score-display.zero{color:var(--muted);}
+.sc-score-display.bonus{color:var(--green);}
+.sc-subtotal{font-family:var(--font-head);font-size:13px;color:var(--muted);min-width:52px;text-align:right;}
+.sc-lock-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--amber);background:transparent;color:var(--amber);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .15s;font-weight:700;flex-shrink:0;}
+.sc-lock-btn:hover{background:var(--amber);color:#1a1000;}
+.sc-yahtzee-bonus{display:flex;align-items:center;gap:6px;}
+.yb-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--amber);background:transparent;color:var(--amber);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.yb-btn:hover{background:var(--amber);color:#1a1000;}
+.yb-count{font-family:var(--font-head);font-size:14px;color:var(--amber2);min-width:20px;text-align:center;}
+
+/* Upper bonus indicator */
+.upper-bonus-indicator{padding:6px 14px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:space-between;}
+.ubi-progress{font-size:11px;color:var(--muted);}
+.ubi-status{font-size:11px;font-weight:700;}
+
+/* Rules */
+.section-title{font-family:var(--font-head);font-size:26px;color:var(--amber2);margin-bottom:6px;letter-spacing:.5px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;font-weight:500;}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.rule-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.rule-icon{font-size:24px;margin-bottom:8px;}
+.rule-title{font-family:var(--font-head);font-size:14px;color:var(--amber2);margin-bottom:7px;}
+.rule-body{font-size:13px;color:var(--muted);line-height:1.7;font-weight:500;}
+.rule-body strong{color:var(--text);font-weight:700;}
+.rule-body ul{padding-left:16px;margin-top:5px;}
+.rule-body li{margin-bottom:4px;}
+
+/* Scoring reference table */
+.ref-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;}
+.ref-table{width:100%;border-collapse:collapse;font-size:13px;}
+.ref-table th{text-align:left;padding:10px 16px;background:var(--surface2);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:1px solid var(--border2);}
+.ref-table td{padding:10px 16px;border-bottom:1px solid var(--border);font-weight:500;}
+.ref-table tr:last-child td{border-bottom:none;}
+.ref-pts{font-family:var(--font-head);font-size:15px;color:var(--amber2);}
+.ref-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 8px;border-radius:4px;}
+.ref-upper{background:rgba(212,134,42,0.15);color:var(--amber);}
+.ref-lower{background:rgba(90,170,106,0.15);color:var(--green);}
+
+/* History */
+.gh-empty{text-align:center;color:var(--muted);padding:40px;font-size:14px;font-weight:500;}
+.gh-list{display:flex;flex-direction:column;gap:12px;}
+.gh-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+.gh-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.gh-title{font-family:var(--font-head);font-size:15px;color:var(--amber2);}
+.gh-date{font-size:11px;color:var(--muted);font-weight:500;}
+.gh-table{width:100%;border-collapse:collapse;font-size:13px;}
+.gh-table th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border2);color:var(--muted);font-size:10px;letter-spacing:1px;font-weight:700;text-transform:uppercase;}
+.gh-table td{padding:7px 8px;border-bottom:1px solid var(--border);}
+.gh-table tr:last-child td{border-bottom:none;}
+
+/* Win overlay */
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;display:none;align-items:center;justify-content:center;}
+.win-overlay.show{display:flex;}
+.win-modal{background:var(--surface);border:1px solid rgba(212,134,42,0.5);border-radius:22px;padding:40px 50px;text-align:center;max-width:400px;}
+.win-dice{font-size:52px;margin-bottom:10px;}
+.win-title{font-family:var(--font-head);font-size:40px;color:var(--amber2);margin-bottom:4px;}
+.win-player{font-family:var(--font-head);font-size:24px;color:var(--text);margin-bottom:4px;}
+.win-score{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:24px;}
+.win-actions{display:flex;gap:10px;justify-content:center;}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:none;align-items:center;justify-content:center;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:26px 30px;width:360px;max-width:92vw;}
+.modal h3{font-family:var(--font-head);font-size:20px;color:var(--amber2);margin-bottom:10px;}
+.modal-body{font-size:13px;color:var(--muted);font-weight:500;margin-bottom:6px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-preview{background:var(--surface2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;font-weight:500;}
+
+.empty-state{text-align:center;color:var(--muted);padding:28px;font-size:14px;font-weight:500;}
+
+.av-0{background:rgba(212,134,42,.25);color:var(--amber2);}
+.av-1{background:rgba(90,170,106,.2);color:var(--green);}
+.av-2{background:rgba(224,80,80,.2);color:var(--red);}
+.av-3{background:rgba(100,160,255,.2);color:#64a0ff;}
+.av-4{background:rgba(176,106,255,.2);color:#b06aff;}
+.av-5{background:rgba(255,140,0,.2);color:#ff8c00;}
+
+@keyframes pop-in{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.scorecard{animation:pop-in .2s ease;}
+
+@media(max-width:640px){.logo-title{font-size:30px;}.top-bar{gap:12px;}.nav button{padding:7px 10px;font-size:11px;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="dice-logo">
+        <div class="die">⚄</div><div class="die">⚅</div>
+        <div class="die">⚂</div><div class="die">⚃</div>
+      </div>
+      <div class="logo-text">
+        <div class="logo-title">YAHTZEE</div>
+        <div class="logo-sub">Score Tracker</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="active" onclick="showPanel('game',this)">Game</button>
+      <button onclick="showPanel('rules',this)">Rules</button>
+      <button onclick="showPanel('history',this)">History</button>
+    </nav>
+  </header>
+
+  <!-- GAME -->
+  <div class="panel active" id="panel-game">
+    <div class="top-bar">
+      <div class="tstat">
+        <div class="tstat-val" id="stat-round">1</div>
+        <div class="tstat-lab">Round</div>
+      </div>
+      <div class="tstat-div"></div>
+      <div class="tstat">
+        <div class="tstat-val" id="stat-players">0</div>
+        <div class="tstat-lab">Players</div>
+      </div>
+      <div class="tstat-div"></div>
+      <div class="tstat">
+        <div class="tstat-val" id="stat-leader" style="font-size:16px;line-height:1.3;">—</div>
+        <div class="tstat-lab">Leading</div>
+      </div>
+      <div class="tstat-div"></div>
+      <div class="tstat">
+        <div class="tstat-val" id="stat-rounds-left">13</div>
+        <div class="tstat-lab">Rounds Left</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn btn-muted btn-sm" onclick="exportGame()">⬇ Export</button>
+        <button class="btn btn-muted btn-sm" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importGame(event)">
+        <button class="btn btn-red btn-sm" onclick="confirmNewGame()">New Game</button>
+      </div>
+    </div>
+
+    <form style="display:flex;gap:10px;margin-bottom:20px;" onsubmit="addPlayer();return false;" action="javascript:void(0)">
+      <input class="text-input" id="new-player-name" type="text" placeholder="Enter player name to add…" autocomplete="off" autocorrect="off" autocapitalize="words">
+      <button type="submit" class="btn btn-amber" id="add-player-btn">+ Add Player</button>
+    </form>
+
+    <!-- Leaderboard -->
+    <div class="lb-wrap" id="lb-wrap">
+      <div class="lb-head">
+        <div class="lb-head-title">Leaderboard</div>
+        <div style="font-size:11px;color:var(--muted);font-weight:600;">13 rounds — highest score wins</div>
+      </div>
+      <div id="lb-body"><div class="empty-state">Add players to begin!</div></div>
+    </div>
+
+    <!-- Scorecards -->
+    <div class="scorecards-wrap" id="scorecards-wrap" style="display:none;">
+      <div class="scorecards-title">Scorecards</div>
+      <div class="scorecards-grid" id="scorecards-grid"></div>
+    </div>
+  </div>
+
+  <!-- RULES -->
+  <div class="panel" id="panel-rules">
+    <div class="section-title">How to Play</div>
+    <div class="section-sub">Roll five dice up to three times per turn. Score combinations to maximise your total over 13 rounds.</div>
+
+    <div style="font-family:var(--font-head);font-size:18px;color:var(--amber2);margin-bottom:12px;">Scoring Reference</div>
+    <div class="ref-table-wrap">
+      <table class="ref-table">
+        <thead><tr><th>Category</th><th>Section</th><th>Points</th><th>Requirement</th></tr></thead>
+        <tbody id="ref-table-body"></tbody>
+      </table>
+    </div>
+
+    <div style="font-family:var(--font-head);font-size:18px;color:var(--amber2);margin-bottom:12px;">Rules</div>
+    <div class="rules-grid" id="rules-grid"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="panel-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div>
+        <div class="section-title" style="margin-bottom:0;">Game History</div>
+        <div class="section-sub" style="margin-bottom:0;">Completed games</div>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear All</button>
+    </div>
+    <div id="gh-container"></div>
+  </div>
+</div>
+
+<!-- Win overlay -->
+<div class="win-overlay" id="win-overlay">
+  <div class="win-modal">
+    <div class="win-dice">🎲</div>
+    <div class="win-title">YAHTZEE!</div>
+    <div class="win-player" id="win-name"></div>
+    <div class="win-score" id="win-score-text"></div>
+    <div class="win-actions">
+      <button class="btn btn-muted" onclick="closeWin()">View Scores</button>
+      <button class="btn btn-amber" onclick="saveAndNew()">Save & New Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm new game -->
+<div class="modal-backdrop" id="modal-newgame">
+  <div class="modal">
+    <h3>New Game?</h3>
+    <div class="modal-body">Save this game to history before resetting?</div>
+    <div class="modal-actions">
+      <button class="btn btn-muted btn-sm" onclick="closeModal('modal-newgame')">Cancel</button>
+      <button class="btn btn-muted btn-sm" onclick="discardNew()">Discard</button>
+      <button class="btn btn-amber btn-sm" onclick="saveAndNew()">Save & Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import confirm -->
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal">
+    <h3>Import Game?</h3>
+    <div class="modal-body">This will replace your current game with the imported save.</div>
+    <div id="import-preview" class="modal-preview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-muted btn-sm" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn btn-amber btn-sm" onclick="confirmImport()">Load Game</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CATEGORIES ────────────────────────────────────────────────────────────────
+const UPPER=[
+  {key:'ones',  label:'Ones',   hint:'Sum of all 1s',max:5},
+  {key:'twos',  label:'Twos',   hint:'Sum of all 2s',max:10},
+  {key:'threes',label:'Threes', hint:'Sum of all 3s',max:15},
+  {key:'fours', label:'Fours',  hint:'Sum of all 4s',max:20},
+  {key:'fives', label:'Fives',  hint:'Sum of all 5s',max:25},
+  {key:'sixes', label:'Sixes',  hint:'Sum of all 6s',max:30},
+];
+const LOWER=[
+  {key:'3ok',   label:'3 of a Kind',   hint:'Sum of all dice',    fixed:false},
+  {key:'4ok',   label:'4 of a Kind',   hint:'Sum of all dice',    fixed:false},
+  {key:'fh',    label:'Full House',    hint:'3+2 of a kind',      fixed:true, pts:25},
+  {key:'ss',    label:'Small Straight',hint:'4 consecutive',      fixed:true, pts:30},
+  {key:'ls',    label:'Large Straight',hint:'5 consecutive',      fixed:true, pts:40},
+  {key:'yahtzee',label:'Yahtzee',      hint:'5 of a kind',        fixed:true, pts:50},
+  {key:'chance',label:'Chance',        hint:'Sum of all dice',    fixed:false},
+];
+const SCORING_REF=[
+  {cat:'Ones',    sec:'upper',pts:'Sum of 1s',  req:'Count all dice showing 1'},
+  {cat:'Twos',    sec:'upper',pts:'Sum of 2s',  req:'Count all dice showing 2'},
+  {cat:'Threes',  sec:'upper',pts:'Sum of 3s',  req:'Count all dice showing 3'},
+  {cat:'Fours',   sec:'upper',pts:'Sum of 4s',  req:'Count all dice showing 4'},
+  {cat:'Fives',   sec:'upper',pts:'Sum of 5s',  req:'Count all dice showing 5'},
+  {cat:'Sixes',   sec:'upper',pts:'Sum of 6s',  req:'Count all dice showing 6'},
+  {cat:'Upper Bonus',sec:'upper',pts:'35',      req:'Score 63+ in upper section'},
+  {cat:'3 of a Kind',sec:'lower',pts:'Sum all', req:'At least 3 dice the same'},
+  {cat:'4 of a Kind',sec:'lower',pts:'Sum all', req:'At least 4 dice the same'},
+  {cat:'Full House',  sec:'lower',pts:'25',     req:'Three of one + two of another'},
+  {cat:'Small Straight',sec:'lower',pts:'30',   req:'Any 4 consecutive numbers'},
+  {cat:'Large Straight',sec:'lower',pts:'40',   req:'All 5 consecutive numbers'},
+  {cat:'Yahtzee',     sec:'lower',pts:'50',     req:'All 5 dice the same'},
+  {cat:'Chance',      sec:'lower',pts:'Sum all',req:'Any combination, sum all dice'},
+  {cat:'Yahtzee Bonus',sec:'lower',pts:'+100 each',req:'Each extra Yahtzee after first'},
+];
+const RULES=[
+  {icon:'🎲',title:'Setup',body:'Each player needs a scorecard. Choose a starting player — the player to the left goes first. Play clockwise for 13 rounds.'},
+  {icon:'🔄',title:'Your Turn',body:'Roll all 5 dice. You may roll up to <strong>3 times total</strong>. Between rolls, set aside any dice you want to keep and re-roll the rest. You don\'t have to use all 3 rolls.'},
+  {icon:'📝',title:'Scoring',body:'After rolling, <strong>choose one open category</strong> to score your dice in. Every category must be filled eventually — even if you score 0. Each category can only be used once.'},
+  {icon:'⬆️',title:'Upper Section',body:'Score the sum of the matching die face. Aim for <strong>63+ points</strong> (average 3 of each number) to earn the <strong>35 point bonus</strong>.'},
+  {icon:'⬇️',title:'Lower Section',body:'<ul><li><strong>3/4 of a Kind:</strong> Sum of all dice</li><li><strong>Full House:</strong> 25 pts</li><li><strong>Small Straight:</strong> 30 pts</li><li><strong>Large Straight:</strong> 40 pts</li><li><strong>Yahtzee:</strong> 50 pts</li><li><strong>Chance:</strong> Sum of all dice</li></ul>'},
+  {icon:'🎯',title:'Yahtzee Bonus',body:'Roll a second (or third!) Yahtzee after scoring 50 in the Yahtzee box? Each extra Yahtzee earns <strong>+100 bonus points</strong>. Use the bonus counter on your scorecard.'},
+  {icon:'🃟',title:'Joker Rule',body:'If you roll a Yahtzee and the Yahtzee box is already filled: first use the matching upper section box if available. If that\'s full too, you may score as a joker in Full House (25), Small Straight (30), or Large Straight (40).'},
+  {icon:'🏆',title:'Winning',body:'After all 13 rounds, tally your score: Upper total + Upper bonus (if 63+) + Lower total + Yahtzee bonuses. <strong>Highest grand total wins!</strong> Average good score is ~250 pts.'},
+];
+const AV=['av-0','av-1','av-2','av-3','av-4','av-5'];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+function emptyScores(){
+  const s={yahtzeeBonus:0};
+  UPPER.forEach(c=>s[c.key]=null);
+  LOWER.forEach(c=>s[c.key]=null);
+  return s;
+}
+let state={players:[],gameOver:false};
+// player: {id, name, ci, scores:{...}}
+let gameHistory=[];
+let pendingImport=null;
+
+function save(){try{localStorage.setItem('ytz_v1',JSON.stringify(state));}catch(e){}}
+function savehist(){try{localStorage.setItem('ytz_hist',JSON.stringify(gameHistory));}catch(e){}}
+function load(){
+  try{const d=localStorage.getItem('ytz_v1');if(d)state=JSON.parse(d);}catch(e){}
+  try{const d=localStorage.getItem('ytz_hist');if(d)gameHistory=JSON.parse(d);}catch(e){}
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function initials(n){return n.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';}
+
+function calcUpperTotal(scores){
+  return UPPER.reduce((t,c)=>t+(scores[c.key]||0),0);
+}
+function calcUpperBonus(scores){
+  return calcUpperTotal(scores)>=63?35:0;
+}
+function calcLowerTotal(scores){
+  return LOWER.reduce((t,c)=>t+(scores[c.key]||0),0)+(scores.yahtzeeBonus||0)*100;
+}
+function calcGrandTotal(scores){
+  return calcUpperTotal(scores)+calcUpperBonus(scores)+calcLowerTotal(scores);
+}
+function roundsFilled(scores){
+  let n=0;
+  UPPER.forEach(c=>{if(scores[c.key]!==null)n++;});
+  LOWER.forEach(c=>{if(scores[c.key]!==null&&c.key!=='yahtzeeBonus')n++;});
+  return n;
+}
+function isComplete(scores){return roundsFilled(scores)===13;}
+
+// ── NAV ────────────────────────────────────────────────────────────────────────
+function showPanel(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='history')renderHistory();
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+// ── PLAYERS ───────────────────────────────────────────────────────────────────
+function addPlayer(){
+  const inp=document.getElementById('new-player-name');
+  if(!inp)return;
+  const name=(inp.value||'').toString().trim();
+  if(!name)return;
+  if(state.players.some(p=>roundsFilled(p.scores)>0)){
+    alert('Cannot add players once scoring has begun.');return;
+  }
+  state.players.push({id:Date.now(),name,ci:state.players.length%6,scores:emptyScores()});
+  inp.value='';inp.blur();
+  renderGame();
+  try{save();}catch(e){}
+}
+function removePlayer(id){
+  if(state.players.some(p=>roundsFilled(p.scores)>0)){alert('Cannot remove players once scoring has begun.');return;}
+  state.players=state.players.filter(p=>p.id!==id);
+  try{save();}catch(e){}
+  renderGame();
+}
+
+// ── SCORING ───────────────────────────────────────────────────────────────────
+function scoreCategory(playerId,key){
+  const p=state.players.find(p=>p.id===playerId);if(!p)return;
+  if(p.scores[key]!==null)return; // already scored
+  const inp=document.getElementById(`inp-${playerId}-${key}`);
+  if(!inp)return;
+  const val=parseInt(inp.value);
+  if(isNaN(val)||val<0)return;
+  p.scores[key]=val;
+  try{save();}catch(e){}
+  renderGame();
+  // Check if all players done
+  checkGameOver();
+}
+function addYahtzeeBonus(playerId){
+  const p=state.players.find(p=>p.id===playerId);if(!p)return;
+  p.scores.yahtzeeBonus=(p.scores.yahtzeeBonus||0)+1;
+  try{save();}catch(e){}
+  renderGame();
+}
+function removeYahtzeeBonus(playerId){
+  const p=state.players.find(p=>p.id===playerId);if(!p)return;
+  p.scores.yahtzeeBonus=Math.max(0,(p.scores.yahtzeeBonus||0)-1);
+  try{save();}catch(e){}
+  renderGame();
+}
+
+function checkGameOver(){
+  if(!state.players.length)return;
+  const allDone=state.players.every(p=>isComplete(p.scores));
+  if(allDone&&!state.gameOver){
+    state.gameOver=true;
+    const winner=[...state.players].sort((a,b)=>calcGrandTotal(b.scores)-calcGrandTotal(a.scores))[0];
+    document.getElementById('win-name').textContent=winner.name;
+    document.getElementById('win-score-text').textContent='Final Score: '+calcGrandTotal(winner.scores)+' pts';
+    document.getElementById('win-overlay').classList.add('show');
+    try{save();}catch(e){}
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderGame(){
+  renderTopBar();
+  renderLeaderboard();
+  renderScorecards();
+}
+
+function renderTopBar(){
+  const n=state.players.length;
+  document.getElementById('stat-players').textContent=n;
+  if(!n){
+    document.getElementById('stat-round').textContent='—';
+    document.getElementById('stat-leader').textContent='—';
+    document.getElementById('stat-rounds-left').textContent='13';
+    return;
+  }
+  const maxFilled=Math.max(...state.players.map(p=>roundsFilled(p.scores)));
+  document.getElementById('stat-round').textContent=Math.min(maxFilled+1,13);
+  document.getElementById('stat-rounds-left').textContent=Math.max(0,13-maxFilled);
+  const leader=[...state.players].sort((a,b)=>calcGrandTotal(b.scores)-calcGrandTotal(a.scores))[0];
+  document.getElementById('stat-leader').textContent=leader.name.split(' ')[0];
+}
+
+function renderLeaderboard(){
+  const body=document.getElementById('lb-body');
+  if(!state.players.length){body.innerHTML='<div class="empty-state">Add players to begin!</div>';return;}
+  const sorted=[...state.players].sort((a,b)=>calcGrandTotal(b.scores)-calcGrandTotal(a.scores));
+  const ranks=['🥇','🥈','🥉'];
+  body.innerHTML=`<table class="lb-table">
+    <thead><tr><th></th><th></th><th>Player</th><th>Upper</th><th>Bonus</th><th>Lower</th><th>Total</th><th>Rounds</th></tr></thead>
+    <tbody>${sorted.map((p,i)=>{
+      const ut=calcUpperTotal(p.scores);
+      const ub=calcUpperBonus(p.scores);
+      const lt=calcLowerTotal(p.scores);
+      const gt=calcGrandTotal(p.scores);
+      const rf=roundsFilled(p.scores);
+      return `<tr>
+        <td style="font-size:16px;width:24px;">${ranks[i]||i+1}</td>
+        <td><div class="lb-avatar ${AV[p.ci]}">${esc(initials(p.name))}</div></td>
+        <td><div class="lb-name">${esc(p.name)}</div></td>
+        <td style="font-family:var(--font-head);font-size:14px;color:var(--muted);">${ut}${ub?'<span class="lb-bonus-pip"></span>':''}</td>
+        <td style="font-family:var(--font-head);font-size:14px;color:${ub?'var(--green)':'var(--muted)'};">${ub?'+35':'—'}</td>
+        <td style="font-family:var(--font-head);font-size:14px;color:var(--muted);">${lt}</td>
+        <td><div class="lb-total">${gt}</div></td>
+        <td style="font-size:12px;color:var(--muted);font-weight:600;">${rf}/13</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function renderScorecards(){
+  const wrap=document.getElementById('scorecards-wrap');
+  if(!state.players.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const grid=document.getElementById('scorecards-grid');
+  grid.innerHTML='';
+  state.players.forEach(p=>grid.appendChild(buildScorecard(p)));
+}
+
+function buildScorecard(p){
+  const div=document.createElement('div');
+  div.className='scorecard';
+  const ut=calcUpperTotal(p.scores);
+  const ub=calcUpperBonus(p.scores);
+  const gt=calcGrandTotal(p.scores);
+  const rf=roundsFilled(p.scores);
+  const uPct=Math.min(100,(ut/63)*100);
+  const bonusNeeded=Math.max(0,63-ut);
+
+  div.innerHTML=`
+    <div class="scorecard-header">
+      <div class="sc-avatar ${AV[p.ci]}">${esc(initials(p.name))}</div>
+      <div class="sc-name">${esc(p.name)}</div>
+      <div class="sc-total">${gt}</div>
+      ${rf===0?`<button class="icon-btn" onclick="removePlayer(${p.id})" title="Remove">✕</button>`:''}
+    </div>
+
+    <div class="sc-section-label">Upper Section</div>
+    ${UPPER.map(c=>{
+      const scored=p.scores[c.key]!==null;
+      return `<div class="sc-row${scored?' scored':''}">
+        <div class="sc-label">${c.label}<span class="sc-label-hint">${c.hint}</span></div>
+        ${scored
+          ? `<div class="sc-score-display${p.scores[c.key]===0?' zero':''}">${p.scores[c.key]}</div>`
+          : `<input class="sc-score-input" id="inp-${p.id}-${c.key}" type="number" min="0" max="${c.max}" placeholder="—">
+             <button class="sc-lock-btn" onclick="scoreCategory(${p.id},'${c.key}')">✓</button>`
+        }
+      </div>`;
+    }).join('')}
+
+    <div class="sc-row bonus-row">
+      <div class="sc-label">Upper Bonus<span class="sc-label-hint">${ub?'Bonus earned! ✓':ut>=63?'Earned!':bonusNeeded+' more needed for 63'}</span></div>
+      <div class="sc-score-display${ub?' bonus':' zero'}">${ub?'+35':'—'}</div>
+    </div>
+    <div class="sc-row" style="background:rgba(212,134,42,0.03);border-color:rgba(212,134,42,0.1);">
+      <div style="flex:1;font-size:11px;color:var(--muted);font-weight:600;">Upper Total: ${ut} / 63</div>
+      <div style="width:80px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;">
+        <div style="width:${uPct}%;height:100%;background:${ub?'var(--green)':'var(--amber)'};border-radius:2px;transition:width .3s;"></div>
+      </div>
+    </div>
+
+    <div class="sc-section-label">Lower Section</div>
+    ${LOWER.map(c=>{
+      const scored=p.scores[c.key]!==null;
+      if(c.key==='yahtzee'){
+        const yb=p.scores.yahtzeeBonus||0;
+        return `<div class="sc-row${scored?' scored':''}">
+          <div class="sc-label">${c.label}<span class="sc-label-hint">${c.hint} — 50 pts</span></div>
+          ${scored
+            ? `<div class="sc-score-display${p.scores[c.key]===0?' zero':''}">${p.scores[c.key]}</div>`
+            : `<input class="sc-score-input" id="inp-${p.id}-${c.key}" type="number" min="0" max="50" placeholder="—">
+               <button class="sc-lock-btn" onclick="scoreCategory(${p.id},'${c.key}')">✓</button>`
+          }
+        </div>
+        <div class="sc-row yahtzee-bonus-row">
+          <div class="sc-label">Yahtzee Bonus<span class="sc-label-hint">+100 each extra Yahtzee</span></div>
+          <div class="sc-yahtzee-bonus">
+            <button class="yb-btn" onclick="removeYahtzeeBonus(${p.id})">−</button>
+            <div class="yb-count">${yb}</div>
+            <button class="yb-btn" onclick="addYahtzeeBonus(${p.id})">+</button>
+            <div style="font-family:var(--font-head);font-size:13px;color:var(--amber2);margin-left:4px;">${yb>0?'+'+yb*100:''}</div>
+          </div>
+        </div>`;
+      }
+      return `<div class="sc-row${scored?' scored':''}">
+        <div class="sc-label">${c.label}<span class="sc-label-hint">${c.hint}${c.fixed?' — '+c.pts+' pts':''}</span></div>
+        ${scored
+          ? `<div class="sc-score-display${p.scores[c.key]===0?' zero':''}">${p.scores[c.key]}</div>`
+          : `<input class="sc-score-input" id="inp-${p.id}-${c.key}" type="number" min="0" max="${c.fixed?c.pts:99}" placeholder="—">
+             <button class="sc-lock-btn" onclick="scoreCategory(${p.id},'${c.key}')">✓</button>`
+        }
+      </div>`;
+    }).join('')}
+
+    <div class="sc-row" style="border-top:1px solid var(--border2);background:rgba(212,134,42,0.04);">
+      <div style="flex:1;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">Grand Total</div>
+      <div style="font-family:var(--font-head);font-size:22px;color:var(--amber2);">${gt}</div>
+    </div>
+  `;
+  return div;
+}
+
+// ── RULES ─────────────────────────────────────────────────────────────────────
+function renderRules(){
+  document.getElementById('ref-table-body').innerHTML=SCORING_REF.map(r=>`
+    <tr>
+      <td style="font-weight:700">${r.cat}</td>
+      <td><span class="ref-section ref-${r.sec}">${r.sec}</span></td>
+      <td class="ref-pts">${r.pts}</td>
+      <td style="color:var(--muted)">${r.req}</td>
+    </tr>`).join('');
+  document.getElementById('rules-grid').innerHTML=RULES.map(r=>`
+    <div class="rule-card">
+      <div class="rule-icon">${r.icon}</div>
+      <div class="rule-title">${r.title}</div>
+      <div class="rule-body">${r.body}</div>
+    </div>`).join('');
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function renderHistory(){
+  const c=document.getElementById('gh-container');
+  if(!gameHistory.length){c.innerHTML='<div class="gh-empty">No saved games yet.<br>Complete a game and click "Save & New Game".</div>';return;}
+  c.innerHTML='<div class="gh-list">'+gameHistory.map((g,gi)=>`
+    <div class="gh-item">
+      <div class="gh-header">
+        <div class="gh-title">Game ${gameHistory.length-gi}</div>
+        <div class="gh-date">${g.date}</div>
+      </div>
+      <table class="gh-table">
+        <thead><tr><th>Player</th><th>Upper</th><th>Bonus</th><th>Lower</th><th>Total</th><th>Result</th></tr></thead>
+        <tbody>${[...g.players].sort((a,b)=>b.total-a.total).map((p,i)=>`
+          <tr>
+            <td style="font-weight:700">${esc(p.name)}</td>
+            <td style="color:var(--muted)">${p.upper}</td>
+            <td style="color:var(--green)">${p.bonus?'+35':'—'}</td>
+            <td style="color:var(--muted)">${p.lower}</td>
+            <td style="font-family:var(--font-head);color:var(--amber2);font-size:16px;">${p.total}</td>
+            <td style="color:${i===0?'var(--amber2)':'var(--muted)'}">${i===0?'🎲 Winner':''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`).join('')+'</div>';
+}
+function clearHistory(){gameHistory=[];savehist();renderHistory();}
+
+// ── WIN / SAVE ────────────────────────────────────────────────────────────────
+function closeWin(){document.getElementById('win-overlay').classList.remove('show');}
+function confirmNewGame(){closeWin();document.getElementById('modal-newgame').classList.add('show');}
+function discardNew(){closeModal('modal-newgame');resetGame();}
+function saveAndNew(){
+  closeWin();
+  if(state.players.length){
+    gameHistory.unshift({
+      date:new Date().toLocaleString(),
+      players:state.players.map(p=>({
+        name:p.name,
+        upper:calcUpperTotal(p.scores),
+        bonus:calcUpperBonus(p.scores)>0,
+        lower:calcLowerTotal(p.scores),
+        total:calcGrandTotal(p.scores)
+      }))
+    });
+    if(gameHistory.length>20)gameHistory.pop();
+    savehist();
+  }
+  closeModal('modal-newgame');
+  resetGame();
+}
+function resetGame(){
+  state={players:state.players.map(p=>({...p,scores:emptyScores()})),gameOver:false};
+  try{save();}catch(e){}
+  renderGame();
+}
+
+// ── EXPORT / IMPORT ───────────────────────────────────────────────────────────
+function exportGame(){
+  const payload={version:1,exportedAt:new Date().toISOString(),state,gameHistory};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const d=new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  a.href=url;a.download=`Yahtzee_${d}.json`;a.click();
+  URL.revokeObjectURL(url);
+}
+function importGame(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.state||!data.state.players)throw new Error('bad');
+      pendingImport=data;
+      const s=data.state;
+      const names=s.players.map(p=>p.name).join(', ')||'None';
+      const leader=s.players.length?[...s.players].sort((a,b)=>calcGrandTotal(b.scores)-calcGrandTotal(a.scores))[0]:null;
+      document.getElementById('import-preview').innerHTML=
+        `<strong style="color:var(--text)">Saved: ${new Date(data.exportedAt).toLocaleString()}</strong><br>`+
+        `Players: ${names}<br>`+
+        (leader?`Leading: ${leader.name} with ${calcGrandTotal(leader.scores)} pts`:'');
+      document.getElementById('modal-import').classList.add('show');
+    }catch(err){alert('Could not read that file.');}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
+function confirmImport(){
+  if(!pendingImport)return;
+  state=pendingImport.state;
+  if(pendingImport.gameHistory)gameHistory=pendingImport.gameHistory;
+  try{save();savehist();}catch(e){}
+  closeModal('modal-import');
+  renderGame();
+  pendingImport=null;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+load();
+renderGame();
+renderRules();
+
+// Mobile-safe add player
+(function(){
+  var btn=document.getElementById('add-player-btn');
+  var inp=document.getElementById('new-player-name');
+  if(btn){
+    btn.onclick=function(){addPlayer();return false;};
+    btn.ontouchstart=function(){};
+    btn.ontouchend=function(e){e.preventDefault();addPlayer();return false;};
+  }
+  if(inp){
+    inp.onkeypress=function(e){if(e.keyCode===13||e.which===13){e.preventDefault();addPlayer();}};
+    inp.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();addPlayer();}};
+  }
+})();
+</script>
+</body>
+</html>
