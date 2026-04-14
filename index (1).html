@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Night — Score Trackers</title>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080d;
+  --surface:#0f0f16;
+  --surface2:#16161f;
+  --border:rgba(255,255,255,0.08);
+  --text:#f0effe;
+  --muted:#6e6c88;
+  --font-head:'Abril Fatface',serif;
+  --font:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* Animated background particles */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(155,143,255,0.08) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(255,95,87,0.06) 0%,transparent 50%),
+    radial-gradient(ellipse at 80% 10%, rgba(94,231,200,0.05) 0%,transparent 40%),
+    radial-gradient(ellipse at 20% 90%, rgba(212,168,67,0.05) 0%,transparent 40%);
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 24px 80px;}
+
+/* Header */
+.header{text-align:center;padding:64px 0 52px;}
+.header-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:20px;
+}
+.header-eyebrow::before,.header-eyebrow::after{content:'';width:28px;height:1px;background:var(--border);}
+.header-title{
+  font-family:var(--font-head);
+  font-size:clamp(48px,10vw,88px);
+  line-height:.95;
+  letter-spacing:-1px;
+  margin-bottom:16px;
+}
+.header-title .line1{display:block;color:var(--text);}
+.header-title .line2{
+  display:block;
+  background:linear-gradient(135deg,#9b8fff 0%,#5ee7c8 50%,#ffb347 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.header-sub{font-size:16px;color:var(--muted);font-weight:400;max-width:400px;margin:0 auto;line-height:1.6;}
+
+/* Game count badge */
+.game-count{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:40px;padding:8px 16px;
+  font-size:12px;font-weight:600;color:var(--muted);
+  margin-top:24px;
+}
+.game-count-num{
+  font-family:var(--font-head);font-size:18px;color:var(--text);line-height:1;
+}
+
+/* Games grid */
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
+  gap:16px;
+  margin-bottom:48px;
+}
+
+/* Game card */
+.game-card{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:28px;
+  position:relative;
+  overflow:hidden;
+  transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  cursor:pointer;
+  animation:card-in .4s ease both;
+}
+.game-card:nth-child(1){animation-delay:.05s;}
+.game-card:nth-child(2){animation-delay:.1s;}
+.game-card:nth-child(3){animation-delay:.15s;}
+.game-card:nth-child(4){animation-delay:.2s;}
+
+.game-card::before{
+  content:'';
+  position:absolute;inset:0;
+  opacity:0;
+  transition:opacity .3s;
+}
+.game-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.game-card:hover::before{opacity:1;}
+.game-card:active{transform:translateY(-2px);}
+
+/* Card accent glow on hover */
+.game-card.p10{border-color:rgba(155,143,255,0.15);}
+.game-card.p10::before{background:radial-gradient(ellipse at 0% 0%,rgba(155,143,255,0.06) 0%,transparent 60%);}
+.game-card.p10:hover{border-color:rgba(155,143,255,0.35);}
+
+.game-card.fc{border-color:rgba(76,175,110,0.15);}
+.game-card.fc::before{background:radial-gradient(ellipse at 0% 0%,rgba(76,175,110,0.06) 0%,transparent 60%);}
+.game-card.fc:hover{border-color:rgba(76,175,110,0.35);}
+
+.game-card.uno{border-color:rgba(255,59,59,0.15);}
+.game-card.uno::before{background:radial-gradient(ellipse at 0% 0%,rgba(255,59,59,0.06) 0%,transparent 60%);}
+.game-card.uno:hover{border-color:rgba(255,59,59,0.35);}
+
+.game-card.ytz{border-color:rgba(212,134,42,0.15);}
+.game-card.ytz::before{background:radial-gradient(ellipse at 0% 0%,rgba(212,134,42,0.06) 0%,transparent 60%);}
+.game-card.ytz:hover{border-color:rgba(212,134,42,0.35);}
+
+/* Big decorative number/emoji */
+.card-deco{
+  position:absolute;
+  right:20px;top:50%;transform:translateY(-50%);
+  font-family:var(--font-head);
+  font-size:100px;
+  line-height:1;
+  opacity:.07;
+  pointer-events:none;
+  transition:opacity .2s;
+  letter-spacing:-2px;
+}
+.game-card:hover .card-deco{opacity:.12;}
+
+.card-top{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.card-icon{
+  width:52px;height:52px;
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  flex-shrink:0;
+}
+.card-icon.p10{background:rgba(155,143,255,0.15);}
+.card-icon.fc{background:rgba(76,175,110,0.15);}
+.card-icon.uno{background:rgba(255,59,59,0.15);}
+.card-icon.ytz{background:rgba(212,134,42,0.15);}
+
+.card-name{font-family:var(--font-head);font-size:26px;letter-spacing:.5px;line-height:1;}
+.card-name.p10{color:#9b8fff;}
+.card-name.fc{color:#4caf6e;}
+.card-name.uno{color:#ff3b3b;}
+.card-name.ytz{color:#d4862a;}
+
+.card-tagline{font-size:13px;color:var(--muted);font-weight:400;line-height:1.5;margin-bottom:18px;max-width:260px;}
+
+/* Feature pills */
+.card-features{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.pill{
+  font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:20px;
+  border:1px solid var(--border);
+  color:var(--muted);
+  background:var(--surface2);
+}
+.pill.p10{border-color:rgba(155,143,255,0.2);color:#9b8fff;background:rgba(155,143,255,0.08);}
+.pill.fc{border-color:rgba(76,175,110,0.2);color:#4caf6e;background:rgba(76,175,110,0.08);}
+.pill.uno{border-color:rgba(255,59,59,0.2);color:#ff5555;background:rgba(255,59,59,0.08);}
+.pill.ytz{border-color:rgba(212,134,42,0.2);color:#d4862a;background:rgba(212,134,42,0.08);}
+
+/* Play button */
+.card-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:600;
+  padding:10px 20px;border-radius:40px;
+  border:1px solid var(--border);
+  color:var(--text);
+  background:var(--surface2);
+  transition:all .2s;
+}
+.game-card:hover .card-btn{border-color:rgba(255,255,255,0.2);background:var(--surface);}
+.card-btn-arrow{transition:transform .2s;}
+.game-card:hover .card-btn-arrow{transform:translateX(3px);}
+
+/* Footer */
+.footer{
+  text-align:center;
+  border-top:1px solid var(--border);
+  padding-top:32px;
+}
+.footer-title{font-family:var(--font-head);font-size:18px;color:var(--muted);margin-bottom:8px;}
+.footer-sub{font-size:12px;color:var(--muted);font-weight:400;opacity:.6;}
+.coming-soon{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;
+}
+.cs-pill{
+  font-size:11px;font-weight:600;
+  padding:5px 14px;border-radius:20px;
+  border:1px dashed rgba(255,255,255,0.1);
+  color:var(--muted);
+  opacity:.6;
+}
+
+@keyframes card-in{
+  from{opacity:0;transform:translateY(16px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+@media(max-width:480px){
+  .games-grid{grid-template-columns:1fr;}
+  .header{padding:40px 0 36px;}
+  .card-deco{font-size:70px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-eyebrow">Free · No Ads · No Signup</div>
+    <h1 class="header-title">
+      <span class="line1">Game</span>
+      <span class="line2">Night</span>
+    </h1>
+    <p class="header-sub">Score trackers for your favourite card and dice games. Beautiful, fast, works on any device.</p>
+    <div class="game-count"><span class="game-count-num">4</span> games available</div>
+  </div>
+
+  <div class="games-grid">
+
+    <!-- Phase 10 -->
+    <a class="game-card p10" href="Phase10Tracker.html">
+      <div class="card-deco">10</div>
+      <div class="card-top">
+        <div class="card-icon p10">🃏</div>
+        <div>
+          <div class="card-name p10">Phase 10</div>
+        </div>
+      </div>
+      <div class="card-tagline">Track phases, scores and rounds for the classic rummy-style race through 10 phases.</div>
+      <div class="card-features">
+        <span class="pill p10">Phase tracking</span>
+        <span class="pill p10">Dealer tracker</span>
+        <span class="pill p10">Score history</span>
+        <span class="pill p10">Calculator</span>
+      </div>
+      <div class="card-btn">Open tracker <span class="card-btn-arrow">→</span></div>
+    </a>
+
+    <!-- Five Crowns -->
+    <a class="game-card fc" href="FiveCrowns.html">
+      <div class="card-deco">★</div>
+      <div class="card-top">
+        <div class="card-icon fc">👑</div>
+        <div>
+          <div class="card-name fc">Five Crowns</div>
+        </div>
+      </div>
+      <div class="card-tagline">Wild card changes every round. Track all 11 rounds with live wild card display and leaderboard.</div>
+      <div class="card-features">
+        <span class="pill fc">Wild card display</span>
+        <span class="pill fc">11 rounds</span>
+        <span class="pill fc">End-of-round entry</span>
+        <span class="pill fc">Calculator</span>
+      </div>
+      <div class="card-btn">Open tracker <span class="card-btn-arrow">→</span></div>
+    </a>
+
+    <!-- UNO -->
+    <a class="game-card uno" href="UNO.html">
+      <div class="card-deco">UNO</div>
+      <div class="card-top">
+        <div class="card-icon uno">🔴</div>
+        <div>
+          <div class="card-name uno">UNO</div>
+        </div>
+      </div>
+      <div class="card-tagline">Race to 500 points. Track rounds, winners and penalties with a live progress bar.</div>
+      <div class="card-features">
+        <span class="pill uno">Race to 500</span>
+        <span class="pill uno">Progress bar</span>
+        <span class="pill uno">Card calculator</span>
+        <span class="pill uno">Custom target</span>
+      </div>
+      <div class="card-btn">Open tracker <span class="card-btn-arrow">→</span></div>
+    </a>
+
+    <!-- Yahtzee -->
+    <a class="game-card ytz" href="Yahtzee.html">
+      <div class="card-deco">🎲</div>
+      <div class="card-top">
+        <div class="card-icon ytz">⚄</div>
+        <div>
+          <div class="card-name ytz">Yahtzee</div>
+        </div>
+      </div>
+      <div class="card-tagline">Full interactive scorecard for every player. Auto-calculates bonuses, upper section, and grand total.</div>
+      <div class="card-features">
+        <span class="pill ytz">Full scorecard</span>
+        <span class="pill ytz">Upper bonus</span>
+        <span class="pill ytz">Yahtzee bonuses</span>
+        <span class="pill ytz">Auto totals</span>
+      </div>
+      <div class="card-btn">Open tracker <span class="card-btn-arrow">→</span></div>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    <div class="footer-title">More games coming soon</div>
+    <div class="footer-sub">Built for game night. Free forever.</div>
+    <div class="coming-soon">
+      <span class="cs-pill">Cribbage</span>
+      <span class="cs-pill">Rummy</span>
+      <span class="cs-pill">Sequence</span>
+      <span class="cs-pill">Skip-Bo</span>
+      <span class="cs-pill">Canasta</span>
+      <span class="cs-pill">Scrabble</span>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
