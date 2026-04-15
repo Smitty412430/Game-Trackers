@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cribbage Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080a08;--surface:#0f120f;--surface2:#161a16;--surface3:#1d221d;--surface4:#242b24;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--text:#edf2ed;--muted:#6b7a6b;--green:#4ca84c;--green2:#6dc96d;--green-dim:rgba(76,168,76,0.12);--wood:#c8862a;--wood2:#e8a845;--wood-dim:rgba(200,134,42,0.12);--red:#d95050;--red-dim:rgba(217,80,80,0.1);--radius:14px;--font-head:'Merriweather',serif;--font:'Lato',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(76,168,76,0.07) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(200,134,42,0.06) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 20px 80px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:24px;flex-wrap:wrap;gap:14px;}
+.logo-title{font-family:var(--font-head);font-size:38px;letter-spacing:1px;line-height:1;color:var(--green2);}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:3px;}
+.nav{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:5px;flex-wrap:wrap;}
+.nav button{font-family:var(--font);font-size:12px;font-weight:700;padding:8px 16px;border:none;border-radius:30px;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);text-transform:uppercase;}
+.nav button.active{background:var(--surface4);color:var(--green2);}
+.nav button:hover:not(.active){color:var(--text);}
+.panel{display:none;}.panel.active{display:block;}
+.btn{font-family:var(--font);font-size:12px;font-weight:700;padding:10px 20px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;text-transform:uppercase;}
+.btn-green{background:var(--green);color:#fff;}.btn-green:hover{filter:brightness(1.1);}
+.btn-wood{background:var(--wood-dim);color:var(--wood2);border:1px solid rgba(200,134,42,.3);}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(217,80,80,.3);}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}
+.btn-sm{font-size:11px;padding:6px 14px;}
+.text-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;outline:none;border-radius:10px;padding:9px 14px;width:100%;}
+.text-input:focus{border-color:var(--green);}
+.text-input::placeholder{color:var(--muted);}
+.top-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;}
+.tstat{text-align:center;min-width:44px;}
+.tstat-val{font-family:var(--font-head);font-size:22px;color:var(--green2);line-height:1;}
+.tstat-lab{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;font-weight:700;}
+.tstat-div{width:1px;height:28px;background:var(--border2);}
+.top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+.board-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.board-title{font-family:var(--font-head);font-size:15px;color:var(--wood2);margin-bottom:16px;}
+.board-player{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.board-player-name{font-size:13px;font-weight:700;min-width:90px;}
+.board-track{flex:1;display:flex;flex-wrap:wrap;gap:2px;}
+.board-hole{width:13px;height:13px;border-radius:50%;background:var(--surface3);border:1px solid var(--border2);flex-shrink:0;transition:background .15s;}
+.board-hole.filled{background:var(--green);border-color:var(--green2);}
+.board-hole.filled.p2{background:var(--wood);border-color:var(--wood2);}
+.board-hole.gap{margin-left:4px;}
+.board-score{font-family:var(--font-head);font-size:22px;color:var(--green2);min-width:48px;text-align:right;}
+.board-score.p2{color:var(--wood2);}
+.entry-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.peg-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.peg-btn:hover{background:var(--surface3);}
+.peg-input{width:62px;height:36px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-head);font-size:16px;text-align:center;outline:none;}
+.peg-input:focus{border-color:var(--green);}
+.add-btn{height:36px;padding:0 16px;border-radius:8px;border:1px solid var(--green);background:transparent;color:var(--green);cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;transition:all .15s;}
+.add-btn:hover{background:var(--green-dim);}
+.section-title{font-family:var(--font-head);font-size:20px;color:var(--green2);margin-bottom:6px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.rule-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.rule-icon{font-size:22px;margin-bottom:8px;}
+.rule-title{font-family:var(--font-head);font-size:13px;color:var(--wood2);margin-bottom:6px;}
+.rule-body{font-size:12px;color:var(--muted);line-height:1.7;}
+.rule-body strong{color:var(--text);}
+.rule-body ul{padding-left:14px;margin-top:4px;}
+.rule-body li{margin-bottom:3px;}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:16px;}
+.calc-item{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;}
+.calc-item-label{font-size:11px;font-weight:700;color:var(--text);margin-bottom:1px;text-transform:uppercase;letter-spacing:.5px;}
+.calc-item-pts{font-size:10px;color:var(--muted);margin-bottom:8px;}
+.cc-row{display:flex;align-items:center;gap:8px;}
+.cc-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border2);background:var(--surface3);color:var(--text);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
+.cc-val{font-family:var(--font-head);font-size:18px;color:var(--green2);min-width:20px;text-align:center;}
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;display:none;align-items:center;justify-content:center;}
+.win-overlay.show{display:flex;}
+.win-modal{background:var(--surface);border:1px solid rgba(76,168,76,0.4);border-radius:22px;padding:40px 50px;text-align:center;max-width:380px;}
+.win-title{font-family:var(--font-head);font-size:34px;color:var(--green2);margin-bottom:6px;}
+.win-player{font-family:var(--font-head);font-size:22px;margin-bottom:4px;}
+.win-score{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.win-actions{display:flex;gap:10px;justify-content:center;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:none;align-items:center;justify-content:center;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:26px 30px;width:360px;max-width:92vw;}
+.modal h3{font-family:var(--font-head);font-size:18px;color:var(--green2);margin-bottom:10px;}
+.modal-body{font-size:13px;color:var(--muted);margin-bottom:6px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-preview{background:var(--surface2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;}
+.gh-empty{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo-title">Cribbage</div>
+      <div class="logo-sub">Score Tracker · First to 121</div>
+    </div>
+    <nav class="nav">
+      <button class="active" onclick="showPanel('game',this)">Game</button>
+      <button onclick="showPanel('calculator',this)">Calculator</button>
+      <button onclick="showPanel('rules',this)">Rules</button>
+      <button onclick="showPanel('history',this)">History</button>
+    </nav>
+  </header>
+
+  <div class="panel active" id="panel-game">
+    <div class="top-bar">
+      <div class="tstat"><div class="tstat-val" id="s-round">1</div><div class="tstat-lab">Round</div></div>
+      <div class="tstat-div"></div>
+      <div class="tstat"><div class="tstat-val" id="s-dealer">—</div><div class="tstat-lab">Dealer</div></div>
+      <div class="tstat-div"></div>
+      <div class="tstat"><div class="tstat-val" id="s-leader">—</div><div class="tstat-lab">Leading</div></div>
+      <div class="top-actions">
+        <button class="btn btn-muted btn-sm" onclick="exportGame()">⬇ Export</button>
+        <button class="btn btn-muted btn-sm" onclick="document.getElementById('imp').click()">⬆ Import</button>
+        <input type="file" id="imp" accept=".json" style="display:none" onchange="importGame(event)">
+        <button class="btn btn-red btn-sm" onclick="confirmNewGame()">New Game</button>
+      </div>
+    </div>
+
+    <div id="setup-section">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;">
+        <div style="font-family:var(--font-head);font-size:18px;color:var(--green2);margin-bottom:4px;">New Game</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Enter 2 player names. First to 121 wins!</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+          <div style="display:flex;gap:8px;align-items:center;"><div style="width:12px;height:12px;border-radius:50%;background:var(--green);flex-shrink:0;"></div><input class="text-input" id="p1n" placeholder="Player 1" style="flex:1;"></div>
+          <div style="display:flex;gap:8px;align-items:center;"><div style="width:12px;height:12px;border-radius:50%;background:var(--wood);flex-shrink:0;"></div><input class="text-input" id="p2n" placeholder="Player 2" style="flex:1;"></div>
+        </div>
+        <button class="btn btn-green" onclick="startGame()">Start Game →</button>
+      </div>
+    </div>
+
+    <div id="game-section" style="display:none;">
+      <div class="board-wrap">
+        <div class="board-title">🎯 Cribbage Board — Race to 121</div>
+        <div id="board"></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(76,168,76,0.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+        <div style="font-family:var(--font-head);font-size:15px;color:var(--green2);margin-bottom:4px;">Add Points</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">Add pegging, hand, and crib points as you go. Use the Calculator tab to count hand combinations.</div>
+        <div id="entry-rows"></div>
+        <button class="btn btn-muted btn-sm" id="undo-btn" onclick="undoLast()" disabled style="margin-top:6px;">↩ Undo Last</button>
+      </div>
+      <div id="log-wrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;">
+        <div style="font-family:var(--font-head);font-size:14px;color:var(--wood2);margin-bottom:10px;">Score Log</div>
+        <div id="log-body" style="font-size:12px;color:var(--muted);max-height:180px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-calculator">
+    <div class="section-title">Hand Calculator</div>
+    <div class="section-sub">Count your scoring combinations to find your hand total.</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+      <div class="calc-grid" id="calc-grid"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border2);padding-top:14px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Total</div>
+          <div style="font-family:var(--font-head);font-size:44px;color:var(--green2);" id="calc-total">0</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <span id="calc-fb" style="font-size:12px;color:var(--green);font-weight:700;"></span>
+          <select id="calc-sel" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;border-radius:8px;outline:none;"></select>
+          <button class="btn btn-green btn-sm" onclick="assignCalc()">Add to Player</button>
+          <button class="btn btn-muted btn-sm" onclick="resetCalc()">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-rules">
+    <div class="section-title">How to Play Cribbage</div>
+    <div class="section-sub">The classic 2-player card game — first to 121 points wins.</div>
+    <div class="rules-grid" id="rules-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div class="section-title" style="margin-bottom:0;">History</div>
+      <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear</button>
+    </div>
+    <div id="gh"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-modal">
+    <div style="font-size:48px;margin-bottom:10px;">🎯</div>
+    <div class="win-title">121!</div>
+    <div class="win-player" id="win-name"></div>
+    <div class="win-score" id="win-info"></div>
+    <div class="win-actions">
+      <button class="btn btn-muted" onclick="closeWin()">View Board</button>
+      <button class="btn btn-green" onclick="saveAndNew()">Save & New</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-ng">
+  <div class="modal"><h3>New Game?</h3><div class="modal-body">Save to history first?</div>
+    <div class="modal-actions">
+      <button class="btn btn-muted btn-sm" onclick="closeModal('modal-ng')">Cancel</button>
+      <button class="btn btn-muted btn-sm" onclick="discardNew()">Discard</button>
+      <button class="btn btn-green btn-sm" onclick="saveAndNew()">Save & Reset</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-imp">
+  <div class="modal"><h3>Import Game?</h3><div class="modal-body">Replace current game?</div>
+    <div id="imp-preview" class="modal-preview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-muted btn-sm" onclick="closeModal('modal-imp')">Cancel</button>
+      <button class="btn btn-green btn-sm" onclick="confirmImport()">Load</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CALC_ITEMS=[
+  {k:'f15',l:'Fifteen',p:2,n:'Each combo totalling 15'},
+  {k:'pair',l:'Pair',p:2,n:'Two of same rank'},
+  {k:'triple',l:'3 of a Kind',p:6,n:'Three of same rank'},
+  {k:'quad',l:'4 of a Kind',p:12,n:'Four of same rank'},
+  {k:'run3',l:'Run of 3',p:3,n:'3 consecutive'},
+  {k:'run4',l:'Run of 4',p:4,n:'4 consecutive'},
+  {k:'run5',l:'Run of 5',p:5,n:'5 consecutive'},
+  {k:'flush4',l:'Flush (4)',p:4,n:'4 hand cards same suit'},
+  {k:'flush5',l:'Flush (5)',p:5,n:'5 cards incl. starter'},
+  {k:'nobs',l:'His Nobs',p:1,n:'Jack matches starter suit'},
+  {k:'heels',l:'His Heels',p:2,n:'Starter is a Jack (dealer)'},
+  {k:'go',l:'Go / Last Card',p:1,n:'Opponent cannot play'},
+  {k:'x31',l:'Thirty-One',p:2,n:'Pegging total hits 31'},
+];
+const RULES=[
+  {i:'🎯',t:'Objective',b:'First to <strong>121 points</strong> wins. Points come from pegging during play and counting hands at the end of each round.'},
+  {i:'🃏',t:'Deal',b:'Deal <strong>6 cards each</strong>. Both players discard 2 cards face-down to the "crib" — the dealer\'s extra hand scored at round end. Deal alternates each round.'},
+  {i:'✂️',t:'The Starter',b:'Non-dealer cuts the deck. Dealer reveals the starter card. If it\'s a Jack, dealer scores <strong>2 for his heels</strong> immediately.'},
+  {i:'🔄',t:'Pegging (Play)',b:'Alternate playing cards, calling the running total (never over 31). Score: <ul><li>Total = 15 or 31: <strong>2 pts</strong></li><li>Pair: <strong>2</strong>, Three of a kind: <strong>6</strong>, Four: <strong>12</strong></li><li>Run of 3+: <strong>1 pt/card</strong></li><li>Go / last card: <strong>1 pt</strong></li></ul>'},
+  {i:'📊',t:'Counting Hands',b:'Non-dealer counts first. Each counts their 4-card hand + starter as a 5th card. Score for 15s (2 pts each), pairs, runs, flushes, his nobs (Jack matching starter suit = 1 pt).'},
+  {i:'🎲',t:'The Crib',b:'Dealer scores the crib last. Same rules as hand scoring, except flushes need all <strong>5 cards</strong> (including starter) to count.'},
+  {i:'🏆',t:'Winning',b:'First to <strong>121 wins</strong> — even mid-hand. Win before opponent reaches 61 = <strong>skunk</strong> (2 games). Before 31 = <strong>double skunk</strong>.'},
+  {i:'💡',t:'Strategy',b:'As non-dealer: throw away cards that don\'t help the crib (avoid 5s and pairs). As dealer: feed your crib. The dealer has a big scoring advantage every other round.'},
+];
+
+let st={started:false,players:['',''],scores:[0,0],dealerIdx:0,round:1,log:[]};
+let hist=[];let calcC={};let lastBak=null;let pendImp=null;
+CALC_ITEMS.forEach(c=>calcC[c.k]=0);
+
+function sv(){try{localStorage.setItem('crib_v1',JSON.stringify(st));}catch(e){}}
+function svh(){try{localStorage.setItem('crib_h1',JSON.stringify(hist));}catch(e){}}
+function ld(){try{const d=localStorage.getItem('crib_v1');if(d)st=JSON.parse(d);}catch(e){}try{const d=localStorage.getItem('crib_h1');if(d)hist=JSON.parse(d);}catch(e){}}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showPanel(n,b){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.getElementById('panel-'+n).classList.add('active');if(b)b.classList.add('active');if(n==='history')renderHist();}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+function startGame(){
+  const p1=(document.getElementById('p1n').value||'').trim()||'Player 1';
+  const p2=(document.getElementById('p2n').value||'').trim()||'Player 2';
+  st={started:true,players:[p1,p2],scores:[0,0],dealerIdx:0,round:1,log:[]};
+  try{sv();}catch(e){}renderG();updSel();
+}
+
+function renderG(){
+  if(!st.started){document.getElementById('setup-section').style.display='';document.getElementById('game-section').style.display='none';return;}
+  document.getElementById('setup-section').style.display='none';document.getElementById('game-section').style.display='';
+  document.getElementById('s-round').textContent=st.round;
+  document.getElementById('s-dealer').textContent=st.players[st.dealerIdx].split(' ')[0];
+  document.getElementById('s-leader').textContent=(st.scores[0]>=st.scores[1]?st.players[0]:st.players[1]).split(' ')[0];
+  renderBoard();renderEntry();renderLog();
+}
+
+function renderBoard(){
+  document.getElementById('board').innerHTML=st.players.map((name,pi)=>{
+    const score=Math.min(st.scores[pi],121);
+    let holes='';
+    for(let i=1;i<=121;i++){
+      const filled=i<=score;
+      const gap=i%30===1&&i>1?' gap':'';
+      const cls=`board-hole${filled?(pi===0?' filled':' filled p2'):''}${gap}`;
+      holes+=`<div class="${cls}"></div>`;
+    }
+    return `<div class="board-player">
+      <div class="board-player-name">${esc(name)}</div>
+      <div class="board-track">${holes}</div>
+      <div class="board-score${pi===1?' p2':''}">${st.scores[pi]}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderEntry(){
+  document.getElementById('entry-rows').innerHTML=st.players.map((name,pi)=>`
+    <div class="entry-row">
+      <div style="width:10px;height:10px;border-radius:50%;background:${pi===0?'var(--green)':'var(--wood)'};flex-shrink:0;"></div>
+      <div style="font-size:13px;font-weight:700;flex:1;">${esc(name)} <span style="font-size:11px;color:var(--muted);font-weight:400;">${st.scores[pi]} pts</span></div>
+      <button class="peg-btn" onclick="qa(${pi},1)">+1</button>
+      <button class="peg-btn" onclick="qa(${pi},2)">+2</button>
+      <button class="peg-btn" onclick="qa(${pi},3)">+3</button>
+      <input class="peg-input" id="pi${pi}" type="number" min="0" max="29" placeholder="0">
+      <button class="add-btn" onclick="ap(${pi})">Add</button>
+    </div>`).join('');
+}
+
+function qa(pi,pts){addPts(pi,pts);}
+function ap(pi){const v=parseInt(document.getElementById('pi'+pi).value)||0;if(v>0){addPts(pi,v);document.getElementById('pi'+pi).value='';}}
+function addPts(pi,pts){
+  lastBak={scores:[...st.scores],log:[...st.log]};
+  st.scores[pi]=Math.min(121,st.scores[pi]+pts);
+  st.log.push({r:st.round,p:st.players[pi],pts,total:st.scores[pi]});
+  document.getElementById('undo-btn').disabled=false;
+  try{sv();}catch(e){}renderG();
+  if(st.scores[pi]>=121){
+    document.getElementById('win-name').textContent=st.players[pi];
+    document.getElementById('win-info').textContent='Final: '+st.players[0]+' '+st.scores[0]+' — '+st.players[1]+' '+st.scores[1];
+    document.getElementById('win-overlay').classList.add('show');
+  }
+}
+function undoLast(){if(!lastBak)return;st.scores=lastBak.scores;st.log=lastBak.log;lastBak=null;document.getElementById('undo-btn').disabled=true;try{sv();}catch(e){}renderG();}
+function renderLog(){
+  const wrap=document.getElementById('log-wrap');
+  if(!st.log.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  document.getElementById('log-body').innerHTML=[...st.log].reverse().slice(0,30).map(l=>`
+    <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+      <span>R${l.r} — ${esc(l.p)}</span><span style="color:var(--green2);font-weight:700">+${l.pts} = ${l.total}</span>
+    </div>`).join('');
+}
+
+// Calculator
+function renderCalc(){
+  document.getElementById('calc-grid').innerHTML=CALC_ITEMS.map(c=>`
+    <div class="calc-item">
+      <div class="calc-item-label">${c.l}</div>
+      <div class="calc-item-pts">${c.p} pts — ${c.n}</div>
+      <div class="cc-row">
+        <button class="cc-btn" onclick="cc('${c.k}',-1)">−</button>
+        <div class="cc-val" id="cc${c.k}">0</div>
+        <button class="cc-btn" onclick="cc('${c.k}',1)">+</button>
+      </div>
+    </div>`).join('');
+  updCalc();
+}
+function cc(k,d){calcC[k]=Math.max(0,(calcC[k]||0)+d);const e=document.getElementById('cc'+k);if(e)e.textContent=calcC[k];updCalc();}
+function calcTot(){return CALC_ITEMS.reduce((t,c)=>t+c.p*(calcC[c.k]||0),0);}
+function updCalc(){document.getElementById('calc-total').textContent=calcTot();}
+function resetCalc(){CALC_ITEMS.forEach(c=>{calcC[c.k]=0;const e=document.getElementById('cc'+c.k);if(e)e.textContent=0;});updCalc();}
+function updSel(){const sel=document.getElementById('calc-sel');sel.innerHTML=st.players.length?st.players.map((p,i)=>`<option value="${i}">${esc(p)}</option>`).join(''):'<option>No players</option>';}
+function assignCalc(){
+  const tot=calcTot();if(!tot)return;
+  const pi=parseInt(document.getElementById('calc-sel').value);
+  addPts(pi,tot);
+  const fb=document.getElementById('calc-fb');fb.textContent='+'+tot+' → '+st.players[pi];setTimeout(()=>fb.textContent='',3000);resetCalc();
+}
+
+// Rules
+function renderRules(){document.getElementById('rules-grid').innerHTML=RULES.map(r=>`<div class="rule-card"><div class="rule-icon">${r.i}</div><div class="rule-title">${r.t}</div><div class="rule-body">${r.b}</div></div>`).join('');}
+
+// History
+function renderHist(){
+  const c=document.getElementById('gh');
+  if(!hist.length){c.innerHTML='<div class="gh-empty">No saved games yet.</div>';return;}
+  c.innerHTML=hist.map((g,gi)=>`
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:var(--font-head);font-size:14px;color:var(--green2)">Game ${hist.length-gi}</div>
+        <div style="font-size:11px;color:var(--muted)">${g.date}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${g.players.map((p,i)=>`<div style="background:var(--surface2);border-radius:8px;padding:10px;border:1px solid ${g.winner===i?'rgba(76,168,76,0.3)':'var(--border)'}">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">${i===0?'P1':'P2'} ${g.winner===i?'🏆':''}</div>
+          <div style="font-family:var(--font-head);font-size:22px;color:${i===0?'var(--green2)':'var(--wood2)'}">${g.scores[i]}</div>
+          <div style="font-size:12px;">${esc(p)}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function clearHistory(){hist=[];svh();renderHist();}
+
+// Win/Save
+function closeWin(){document.getElementById('win-overlay').classList.remove('show');}
+function confirmNewGame(){closeWin();document.getElementById('modal-ng').classList.add('show');}
+function discardNew(){closeModal('modal-ng');resetGame();}
+function saveAndNew(){
+  closeWin();
+  if(st.started){hist.unshift({date:new Date().toLocaleString(),players:[...st.players],scores:[...st.scores],winner:st.scores[0]>=st.scores[1]?0:1});if(hist.length>20)hist.pop();svh();}
+  closeModal('modal-ng');resetGame();
+}
+function resetGame(){st={started:false,players:['',''],scores:[0,0],dealerIdx:0,round:1,log:[]};lastBak=null;try{sv();}catch(e){}renderG();}
+
+// Export/Import
+function exportGame(){
+  const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),state:st,gameHistory:hist},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='Cribbage_'+new Date().toLocaleDateString('en-AU').replace(/\//g,'-')+'.json';a.click();URL.revokeObjectURL(url);
+}
+function importGame(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{try{const data=JSON.parse(ev.target.result);if(!data.state)throw new Error();pendImp=data;document.getElementById('imp-preview').innerHTML=`Saved: ${new Date(data.exportedAt).toLocaleString()}<br>${data.state.players?.join(' vs ')||''}`;document.getElementById('modal-imp').classList.add('show');}catch(e){alert('Could not read file.');}e.target.value='';};reader.readAsText(file);
+}
+function confirmImport(){if(!pendImp)return;st=pendImp.state;if(pendImp.gameHistory)hist=pendImp.gameHistory;lastBak=null;try{sv();svh();}catch(e){}closeModal('modal-imp');renderG();updSel();pendImp=null;}
+
+ld();renderG();renderCalc();renderRules();updSel();
+</script>
+</body>
+</html>

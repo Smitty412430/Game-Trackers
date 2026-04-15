@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gin Rummy Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0a0e;--surface:#141018;--surface2:#1c1520;--surface3:#231b28;--surface4:#2b2130;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0ecf8;--muted:#7a6e8a;
+  --purple:#b87aff;--purple2:#d4a8ff;--purple-dim:rgba(184,122,255,0.12);
+  --red:#e05555;--red-dim:rgba(224,85,85,0.12);
+  --green:#5aaa6a;--green-dim:rgba(90,170,106,0.12);
+  --gold:#e8b84b;--gold-dim:rgba(232,184,75,0.12);
+  --p1:#b87aff;--p2:#ff8a65;
+  --radius:14px;--font-head:'DM Serif Display',serif;--font:'Outfit',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(184,122,255,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(255,138,101,0.06) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 20px 80px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.logo-title{font-family:var(--font-head);font-size:42px;line-height:1;color:var(--text);}
+.logo-title em{color:var(--purple);font-style:italic;}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:3px;}
+.nav{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:5px;flex-wrap:wrap;}
+.nav button{font-family:var(--font);font-size:12px;font-weight:600;padding:8px 16px;border:none;border-radius:30px;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+.nav button.active{background:var(--surface4);color:var(--text);}
+.nav button:hover:not(.active){color:var(--text);}
+.panel{display:none;}.panel.active{display:block;}
+.btn{font-family:var(--font);font-size:12px;font-weight:700;padding:10px 20px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;text-transform:uppercase;letter-spacing:.3px;}
+.btn-purple{background:var(--purple);color:#0c0814;}.btn-purple:hover{filter:brightness(1.1);}
+.btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(90,170,106,.3);}.btn-green:hover{background:rgba(90,170,106,.2);}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(224,85,85,.3);}.btn-red:hover{background:rgba(224,85,85,.2);}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}.btn-muted:hover{background:var(--surface4);}
+.btn-sm{font-size:11px;padding:6px 14px;}
+.text-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;outline:none;border-radius:8px;padding:9px 14px;}
+.text-input:focus{border-color:var(--purple);}
+.text-input::placeholder{color:var(--muted);}
+.modal-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;outline:none;border-radius:10px;padding:9px 14px;width:100%;}
+.modal-input:focus{border-color:var(--purple);}
+
+/* Score cards */
+.score-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.score-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.sc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px;}
+.sc-name{font-family:var(--font-head);font-size:22px;margin-bottom:12px;}
+.sc-score{font-family:var(--font-head);font-size:52px;line-height:1;margin-bottom:4px;}
+.sc-target{font-size:12px;color:var(--muted);font-weight:500;}
+.sc-progress{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-top:8px;}
+.sc-progress-fill{height:100%;border-radius:2px;transition:width .3s;}
+
+/* Round entry */
+.round-entry{background:var(--surface);border:1px solid rgba(184,122,255,.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.re-title{font-family:var(--font-head);font-size:18px;margin-bottom:4px;}
+.re-sub{font-size:12px;color:var(--muted);margin-bottom:16px;font-weight:500;}
+.re-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;margin-top:14px;}
+.round-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.rtype-btn{font-family:var(--font);font-size:12px;font-weight:700;padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;}
+.rtype-btn:hover{color:var(--text);}
+.rtype-btn.selected{border-color:var(--purple);color:var(--purple);background:var(--purple-dim);}
+.player-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+.pr-name{flex:1;font-weight:600;font-size:14px;}
+.pr-input{width:80px;height:34px;background:var(--surface3);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font-head);font-size:16px;text-align:center;outline:none;}
+.pr-input:focus{border-color:var(--purple);}
+.pr-label{font-size:11px;color:var(--muted);font-weight:600;min-width:80px;}
+.winner-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700;text-transform:uppercase;}
+.winner-toggle input{accent-color:var(--purple);}
+.winner-toggle.active{color:var(--purple);}
+
+/* Hand history */
+.hand-history{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;}
+.hh-title{font-family:var(--font-head);font-size:16px;margin-bottom:12px;}
+.hh-table{width:100%;border-collapse:collapse;font-size:12px;}
+.hh-table th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border2);color:var(--muted);font-size:9px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;}
+.hh-table td{padding:7px 8px;border-bottom:1px solid var(--border);}
+.hh-table tr:last-child td{border-bottom:none;}
+
+/* Rules */
+.section-title{font-family:var(--font-head);font-size:24px;margin-bottom:6px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.rule-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.rule-icon{font-size:22px;margin-bottom:8px;}
+.rule-title{font-family:var(--font-head);font-size:14px;color:var(--purple2);margin-bottom:6px;}
+.rule-body{font-size:12px;color:var(--muted);line-height:1.7;}
+.rule-body strong{color:var(--text);font-weight:600;}
+.rule-body ul{padding-left:14px;margin-top:4px;}
+.rule-body li{margin-bottom:3px;}
+
+/* Scoring ref */
+.ref-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:22px;}
+.ref-table{width:100%;border-collapse:collapse;font-size:12px;}
+.ref-table th{text-align:left;padding:9px 14px;background:var(--surface2);color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;font-weight:700;border-bottom:1px solid var(--border2);}
+.ref-table td{padding:9px 14px;border-bottom:1px solid var(--border);font-weight:500;}
+.ref-table tr:last-child td{border-bottom:none;}
+.ref-pts{font-family:var(--font-head);font-size:15px;color:var(--purple2);}
+
+/* Game history */
+.gh-empty{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
+.gh-list{display:flex;flex-direction:column;gap:12px;}
+.gh-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+.gh-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.gh-title{font-family:var(--font-head);font-size:15px;color:var(--purple2);}
+.gh-date{font-size:11px;color:var(--muted);}
+
+/* Win overlay */
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;display:none;align-items:center;justify-content:center;}
+.win-overlay.show{display:flex;}
+.win-modal{background:var(--surface);border:1px solid rgba(184,122,255,.4);border-radius:22px;padding:40px 50px;text-align:center;max-width:400px;}
+.win-icon{font-size:52px;margin-bottom:10px;}
+.win-title{font-family:var(--font-head);font-size:36px;color:var(--purple2);margin-bottom:6px;}
+.win-player{font-family:var(--font-head);font-size:24px;margin-bottom:4px;}
+.win-info{font-size:13px;color:var(--muted);margin-bottom:24px;}
+.win-actions{display:flex;gap:10px;justify-content:center;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:none;align-items:center;justify-content:center;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:26px 30px;width:360px;max-width:92vw;}
+.modal h3{font-family:var(--font-head);font-size:20px;color:var(--purple2);margin-bottom:10px;}
+.modal-body{font-size:13px;color:var(--muted);margin-bottom:6px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-preview{background:var(--surface2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;}
+@media(max-width:520px){.score-cards{grid-template-columns:1fr;}.logo-title{font-size:30px;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo-title"><em>Gin</em> Rummy</div>
+      <div class="logo-sub">Score Tracker · First to 100</div>
+    </div>
+    <nav class="nav">
+      <button class="active" onclick="showPanel('game',this)">Game</button>
+      <button onclick="showPanel('rules',this)">Rules</button>
+      <button onclick="showPanel('history',this)">History</button>
+    </nav>
+  </header>
+
+  <div class="panel active" id="panel-game">
+    <!-- Setup -->
+    <div id="setup-section">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;">
+        <div style="font-family:var(--font-head);font-size:20px;color:var(--purple2);margin-bottom:4px;">New Game</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Enter two player names and optionally set the target score.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--p1);margin-bottom:6px;">Player 1</div>
+            <input class="text-input" id="p1-name" placeholder="Name" style="width:100%;">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--p2);margin-bottom:6px;">Player 2</div>
+            <input class="text-input" id="p2-name" placeholder="Name" style="width:100%;">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div style="font-size:12px;color:var(--muted);font-weight:600;">Target score:</div>
+          <input class="text-input" id="target-score" type="number" value="100" min="50" style="width:80px;">
+        </div>
+        <button class="btn btn-purple" onclick="startGame()">Start Game →</button>
+      </div>
+    </div>
+
+    <!-- Game -->
+    <div id="game-section" style="display:none;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-head);font-size:22px;color:var(--purple2);" id="hand-num">1</div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Hand</div>
+        </div>
+        <div style="width:1px;height:28px;background:var(--border2);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:14px;font-weight:700;" id="dealer-display">—</div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Dealer</div>
+        </div>
+        <div style="width:1px;height:28px;background:var(--border2);"></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:600;">Target: <span id="target-display" style="color:var(--gold);font-family:var(--font-head);font-size:16px;">100</span> pts</div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-muted btn-sm" onclick="undoLast()" id="undo-btn" disabled>↩ Undo</button>
+          <button class="btn btn-muted btn-sm" onclick="exportGame()">⬇ Export</button>
+          <button class="btn btn-muted btn-sm" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importGame(event)">
+          <button class="btn btn-red btn-sm" onclick="confirmNewGame()">New Game</button>
+        </div>
+      </div>
+
+      <div class="score-cards" id="score-cards"></div>
+
+      <div class="round-entry">
+        <div class="re-title" id="re-title">Hand 1 Result</div>
+        <div class="re-sub">Select the round type, winner, and enter deadwood points.</div>
+
+        <div class="re-section">Round Type</div>
+        <div class="round-type-row">
+          <button class="rtype-btn selected" id="rt-knock" onclick="selectRoundType('knock')">Knock</button>
+          <button class="rtype-btn" id="rt-gin" onclick="selectRoundType('gin')">Gin (+25 bonus)</button>
+          <button class="rtype-btn" id="rt-undercut" onclick="selectRoundType('undercut')">Undercut (+25 bonus)</button>
+        </div>
+
+        <div class="re-section">Winner</div>
+        <div id="winner-row" style="display:flex;gap:8px;margin-bottom:12px;"></div>
+
+        <div class="re-section">Deadwood Points</div>
+        <div id="deadwood-rows"></div>
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;">
+          <button class="btn btn-purple" onclick="submitHand()">Submit Hand →</button>
+          <span id="hand-preview" style="font-size:12px;color:var(--muted);font-weight:600;"></span>
+        </div>
+      </div>
+
+      <div class="hand-history" id="hand-history" style="display:none;">
+        <div class="hh-title">Hand History</div>
+        <table class="hh-table">
+          <thead><tr><th>Hand</th><th>Type</th><th>Winner</th><th>Points</th><th>P1 Total</th><th>P2 Total</th></tr></thead>
+          <tbody id="hh-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-rules">
+    <div class="section-title">How to Play</div>
+    <div class="section-sub">Gin Rummy — 2 players, form melds, knock or go gin, first to 100.</div>
+    <div class="ref-wrap">
+      <table class="ref-table">
+        <thead><tr><th>Scoring Event</th><th>Points</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:700">Knock</td><td class="ref-pts">Difference</td><td style="color:var(--muted)">Knocker scores difference in deadwood counts</td></tr>
+          <tr><td style="font-weight:700">Gin Bonus</td><td class="ref-pts">+25</td><td style="color:var(--muted)">Go gin (0 deadwood) — opponent cannot lay off</td></tr>
+          <tr><td style="font-weight:700">Undercut Bonus</td><td class="ref-pts">+25</td><td style="color:var(--muted)">Defender has ≤ knocker deadwood — defender wins</td></tr>
+          <tr><td style="font-weight:700">Game Bonus</td><td class="ref-pts">+100</td><td style="color:var(--muted)">Awarded to winner at end of game</td></tr>
+          <tr><td style="font-weight:700">Box Bonus</td><td class="ref-pts">+25 each</td><td style="color:var(--muted)">25 pts per hand won during the game</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rules-grid" id="rules-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div><div class="section-title" style="margin-bottom:0;">Game History</div></div>
+      <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear All</button>
+    </div>
+    <div id="gh-container"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-modal">
+    <div class="win-icon">🃏</div>
+    <div class="win-title">GIN!</div>
+    <div class="win-player" id="win-name"></div>
+    <div class="win-info" id="win-info"></div>
+    <div class="win-actions">
+      <button class="btn btn-muted" onclick="closeWin()">View Scores</button>
+      <button class="btn btn-purple" onclick="saveAndNew()">Save & New Game</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-newgame">
+  <div class="modal">
+    <h3>New Game?</h3>
+    <div class="modal-body">Save to history before resetting?</div>
+    <div class="modal-actions">
+      <button class="btn btn-muted btn-sm" onclick="closeModal('modal-newgame')">Cancel</button>
+      <button class="btn btn-muted btn-sm" onclick="discardNew()">Discard</button>
+      <button class="btn btn-purple btn-sm" onclick="saveAndNew()">Save & Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal">
+    <h3>Import Game?</h3>
+    <div class="modal-body">Replace current game?</div>
+    <div id="import-preview" class="modal-preview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-muted btn-sm" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn btn-purple btn-sm" onclick="confirmImport()">Load</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const RULES=[
+  {icon:'🎯',title:'Objective',body:'First player to reach <strong>100 points</strong> wins (or agreed target). Points are scored each hand based on deadwood and bonuses.'},
+  {icon:'🃏',title:'Setup',body:'Deal 10 cards each. Turn up one card to start the discard pile. Non-dealer goes first and may take the upcard or pass.'},
+  {icon:'🔄',title:'Your Turn',body:'Draw one card (from deck or discard pile). Try to form melds (sets of 3+ same rank, or runs of 3+ same suit). Discard one card to end your turn.'},
+  {icon:'✊',title:'Knocking',body:'When your deadwood (unmelded cards) totals <strong>10 or less</strong>, you may knock. Discard face-down, lay out melds and deadwood. Opponent may lay off on your melds.'},
+  {icon:'🏆',title:'Going Gin',body:'Knock with <strong>zero deadwood</strong> — this is Gin! You score opponent\'s full deadwood plus a <strong>25 point bonus</strong>. Opponent cannot lay off any cards.'},
+  {icon:'⚡',title:'Undercut',body:'If defender\'s deadwood after lay-offs is ≤ knocker\'s deadwood, the <strong>defender wins</strong> and scores the difference plus a <strong>25 point bonus</strong>.'},
+  {icon:'🃟',title:'Card Values',body:'<ul><li>Ace: 1 point</li><li>2–10: face value</li><li>Jack, Queen, King: 10 points each</li></ul>'},
+  {icon:'💡',title:'Strategy',body:'Keep your deadwood low. 5s and face cards are risky. Watch what your opponent picks up. Don\'t knock too early — going for Gin scores more.'},
+];
+
+let state={started:false,players:['',''],scores:[0,0],targetScore:100,hand:1,dealerIdx:0,hands:[],selectedWinner:0,roundType:'knock'};
+let gameHistory=[];
+let lastBackup=null;
+let pendingImport=null;
+
+function save(){try{localStorage.setItem('ginrummy_v1',JSON.stringify(state));}catch(e){}}
+function savehist(){try{localStorage.setItem('ginrummy_hist',JSON.stringify(gameHistory));}catch(e){}}
+function load(){
+  try{const d=localStorage.getItem('ginrummy_v1');if(d)state=JSON.parse(d);}catch(e){}
+  try{const d=localStorage.getItem('ginrummy_hist');if(d)gameHistory=JSON.parse(d);}catch(e){}
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showPanel(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='history')renderHistory();
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+function startGame(){
+  const p1=(document.getElementById('p1-name').value||'').trim()||'Player 1';
+  const p2=(document.getElementById('p2-name').value||'').trim()||'Player 2';
+  const target=parseInt(document.getElementById('target-score').value)||100;
+  state={started:true,players:[p1,p2],scores:[0,0],targetScore:target,hand:1,dealerIdx:0,hands:[],selectedWinner:0,roundType:'knock'};
+  try{save();}catch(e){}
+  renderGame();
+}
+
+function selectRoundType(type){
+  state.roundType=type;
+  ['knock','gin','undercut'].forEach(t=>{
+    const btn=document.getElementById('rt-'+t);
+    if(btn)btn.className='rtype-btn'+(t===type?' selected':'');
+  });
+  updateHandPreview();
+}
+
+function selectWinner(idx){
+  state.selectedWinner=idx;
+  document.querySelectorAll('.winner-btn').forEach((b,i)=>{
+    b.className='rtype-btn winner-btn'+(i===idx?' selected':'');
+  });
+  updateHandPreview();
+}
+
+function updateHandPreview(){
+  const dw=getDeadwoods();
+  const pts=calcHandPts(dw);
+  const p=document.getElementById('hand-preview');
+  if(pts!==null)p.textContent='+'+pts+' pts to '+state.players[state.selectedWinner];
+  else p.textContent='';
+}
+
+function getDeadwoods(){
+  return state.players.map((_,i)=>{
+    const inp=document.getElementById('dw-'+i);
+    return inp?parseInt(inp.value)||0:0;
+  });
+}
+
+function calcHandPts(dw){
+  const w=state.selectedWinner;
+  const l=1-w;
+  const type=state.roundType;
+  if(type==='gin') return dw[l]+25;
+  if(type==='undercut') return Math.abs(dw[w]-dw[l])+25;
+  if(type==='knock') return Math.max(0,dw[l]-dw[w]);
+  return 0;
+}
+
+function submitHand(){
+  const dw=getDeadwoods();
+  const pts=calcHandPts(dw);
+  const w=state.selectedWinner;
+  lastBackup={scores:[...state.scores],hands:[...state.hands],hand:state.hand,dealerIdx:state.dealerIdx};
+  state.scores[w]+=pts;
+  state.hands.push({hand:state.hand,type:state.roundType,winner:state.players[w],pts,dw0:dw[0],dw1:dw[1],s0:state.scores[0],s1:state.scores[1]});
+  state.hand++;
+  state.dealerIdx=(state.dealerIdx+1)%2;
+  document.getElementById('undo-btn').disabled=false;
+  const inp0=document.getElementById('dw-0');const inp1=document.getElementById('dw-1');
+  if(inp0)inp0.value=0;if(inp1)inp1.value=0;
+  try{save();}catch(e){}
+  renderGame();
+  if(state.scores[w]>=state.targetScore) triggerWin(w);
+}
+
+function undoLast(){
+  if(!lastBackup)return;
+  state.scores=lastBackup.scores;state.hands=lastBackup.hands;state.hand=lastBackup.hand;state.dealerIdx=lastBackup.dealerIdx;
+  lastBackup=null;document.getElementById('undo-btn').disabled=true;
+  try{save();}catch(e){}renderGame();
+}
+
+function renderGame(){
+  if(!state.started){document.getElementById('setup-section').style.display='';document.getElementById('game-section').style.display='none';return;}
+  document.getElementById('setup-section').style.display='none';document.getElementById('game-section').style.display='';
+  document.getElementById('hand-num').textContent=state.hand;
+  document.getElementById('dealer-display').textContent=state.players[state.dealerIdx];
+  document.getElementById('target-display').textContent=state.targetScore;
+  document.getElementById('re-title').textContent='Hand '+state.hand+' Result';
+
+  const colors=['var(--p1)','var(--p2)'];
+  document.getElementById('score-cards').innerHTML=state.players.map((name,i)=>{
+    const pct=Math.min(100,(state.scores[i]/state.targetScore)*100);
+    return `<div class="score-card">
+      <div class="sc-label" style="color:${colors[i]}">${i===0?'Player 1':'Player 2'}</div>
+      <div class="sc-name" style="color:${colors[i]}">${esc(name)}</div>
+      <div class="sc-score" style="color:${colors[i]}">${state.scores[i]}</div>
+      <div class="sc-target" style="color:var(--muted)">${state.targetScore-state.scores[i]} to win</div>
+      <div class="sc-progress"><div class="sc-progress-fill" style="width:${pct}%;background:${colors[i]};"></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('winner-row').innerHTML=state.players.map((name,i)=>
+    `<button class="rtype-btn winner-btn${state.selectedWinner===i?' selected':''}" onclick="selectWinner(${i})">${esc(name)}</button>`
+  ).join('');
+
+  document.getElementById('deadwood-rows').innerHTML=state.players.map((name,i)=>`
+    <div class="player-row">
+      <div class="pr-name" style="color:${colors[i]}">${esc(name)}</div>
+      <div class="pr-label">Deadwood pts</div>
+      <input class="pr-input" id="dw-${i}" type="number" min="0" value="0" oninput="updateHandPreview()">
+    </div>`).join('');
+
+  // Hand history
+  const wrap=document.getElementById('hand-history');
+  if(!state.hands.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  document.getElementById('hh-body').innerHTML=[...state.hands].reverse().map(h=>`
+    <tr>
+      <td style="color:var(--muted)">H${h.hand}</td>
+      <td style="font-weight:700;text-transform:capitalize;color:var(--purple2)">${h.type}</td>
+      <td style="font-weight:700">${esc(h.winner)}</td>
+      <td style="font-family:var(--font-head);font-size:15px;color:var(--purple2)">+${h.pts}</td>
+      <td style="font-family:var(--font-head);font-size:14px;">${h.s0}</td>
+      <td style="font-family:var(--font-head);font-size:14px;">${h.s1}</td>
+    </tr>`).join('');
+}
+
+function triggerWin(wi){
+  document.getElementById('win-name').textContent=state.players[wi];
+  document.getElementById('win-info').textContent='Final score: '+state.scores[wi]+' pts';
+  document.getElementById('win-overlay').classList.add('show');
+}
+function closeWin(){document.getElementById('win-overlay').classList.remove('show');}
+function confirmNewGame(){closeWin();document.getElementById('modal-newgame').classList.add('show');}
+function discardNew(){closeModal('modal-newgame');resetGame();}
+function saveAndNew(){
+  closeWin();
+  if(state.started&&state.hands.length){
+    const wi=state.scores[0]>=state.targetScore?0:1;
+    gameHistory.unshift({date:new Date().toLocaleString(),players:state.players,scores:state.scores,hands:state.hands.length,winner:state.players[wi]});
+    if(gameHistory.length>20)gameHistory.pop();savehist();
+  }
+  closeModal('modal-newgame');resetGame();
+}
+function resetGame(){
+  state={started:false,players:['',''],scores:[0,0],targetScore:100,hand:1,dealerIdx:0,hands:[],selectedWinner:0,roundType:'knock'};
+  lastBackup=null;document.getElementById('undo-btn').disabled=true;
+  try{save();}catch(e){}renderGame();
+}
+function renderHistory(){
+  const c=document.getElementById('gh-container');
+  if(!gameHistory.length){c.innerHTML='<div class="gh-empty">No saved games yet.</div>';return;}
+  c.innerHTML='<div class="gh-list">'+gameHistory.map((g,gi)=>`
+    <div class="gh-item">
+      <div class="gh-header"><div class="gh-title">Game ${gameHistory.length-gi} — ${g.hands} hands</div><div class="gh-date">${g.date}</div></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        ${g.players.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${i===0?'var(--p1)':'var(--p2)'}"></div>
+          <span style="font-weight:700">${esc(p)}</span>
+          <span style="font-family:var(--font-head);font-size:18px;color:${i===0?'var(--p1)':'var(--p2)'};">${g.scores[i]}</span>
+          ${g.winner===p?'<span style="font-size:10px;font-weight:700;color:var(--purple);background:var(--purple-dim);border:1px solid rgba(184,122,255,.3);padding:2px 8px;border-radius:10px;">Winner</span>':''}
+        </div>`).join('')}
+      </div>
+    </div>`).join('')+'</div>';
+}
+function clearHistory(){gameHistory=[];savehist();renderHistory();}
+function exportGame(){
+  const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),state,gameHistory},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=`GinRummy_${new Date().toLocaleDateString('en-AU').replace(/\//g,'-')}.json`;a.click();URL.revokeObjectURL(url);
+}
+function importGame(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{const data=JSON.parse(ev.target.result);if(!data.state)throw new Error();pendingImport=data;
+      const s=data.state;
+      document.getElementById('import-preview').innerHTML=`<strong style="color:var(--text)">${new Date(data.exportedAt).toLocaleString()}</strong><br>${s.started?s.players[0]+': '+s.scores[0]+' vs '+s.players[1]+': '+s.scores[1]:'Not started'}`;
+      document.getElementById('modal-import').classList.add('show');
+    }catch(err){alert('Could not read file.');}e.target.value='';
+  };reader.readAsText(file);
+}
+function confirmImport(){
+  if(!pendingImport)return;state=pendingImport.state;if(pendingImport.gameHistory)gameHistory=pendingImport.gameHistory;
+  lastBackup=null;try{save();savehist();}catch(e){}closeModal('modal-import');renderGame();pendingImport=null;
+}
+function renderRules(){
+  document.getElementById('rules-grid').innerHTML=RULES.map(r=>`
+    <div class="rule-card"><div class="rule-icon">${r.icon}</div><div class="rule-title">${r.title}</div><div class="rule-body">${r.body}</div></div>`).join('');
+}
+load();renderGame();renderRules();
+</script>
+</body>
+</html>

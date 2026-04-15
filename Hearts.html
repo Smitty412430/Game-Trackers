@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hearts Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0608;--surface:#160b0d;--surface2:#1e1012;--surface3:#271418;--surface4:#30181d;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f8eaec;--muted:#8a6068;
+  --rose:#e8507a;--rose2:#f080a0;--rose-dim:rgba(232,80,122,0.12);
+  --crimson:#c02040;--crimson-dim:rgba(192,32,64,0.12);
+  --silver:#c0b8c0;--silver-dim:rgba(192,184,192,0.12);
+  --green:#5ab870;--green-dim:rgba(90,184,112,0.12);
+  --gold:#e8b84b;
+  --queen-color:#c02040;
+  --radius:14px;--font-head:'Cormorant Garamond',serif;--font:'Mulish',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 0%,rgba(232,80,122,0.08) 0%,transparent 50%),radial-gradient(ellipse at 70% 100%,rgba(192,32,64,0.06) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 20px 80px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:26px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.logo-title{font-family:var(--font-head);font-size:46px;letter-spacing:1px;line-height:1;color:var(--text);font-style:italic;}
+.logo-title span{color:var(--rose2);}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.nav{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:5px;flex-wrap:wrap;}
+.nav button{font-family:var(--font);font-size:12px;font-weight:700;padding:8px 16px;border:none;border-radius:30px;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+.nav button.active{background:var(--surface4);color:var(--rose2);}
+.nav button:hover:not(.active){color:var(--text);}
+.panel{display:none;}.panel.active{display:block;}
+.btn{font-family:var(--font);font-size:12px;font-weight:700;padding:10px 20px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;text-transform:uppercase;letter-spacing:.5px;}
+.btn-rose{background:var(--rose);color:#0d0305;}.btn-rose:hover{filter:brightness(1.1);}
+.btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(90,184,112,.3);}.btn-green:hover{background:rgba(90,184,112,.2);}
+.btn-red{background:var(--crimson-dim);color:var(--crimson);border:1px solid rgba(192,32,64,.3);}.btn-red:hover{background:rgba(192,32,64,.2);}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}.btn-muted:hover{background:var(--surface4);}
+.btn-sm{font-size:11px;padding:6px 14px;}
+.text-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;outline:none;border-radius:8px;padding:9px 14px;}
+.text-input:focus{border-color:var(--rose);}
+.text-input::placeholder{color:var(--muted);}
+.modal-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;outline:none;border-radius:10px;padding:9px 14px;width:100%;}
+.modal-input:focus{border-color:var(--rose);}
+
+/* Scoreboard */
+.scoreboard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;}
+.sb-header{display:flex;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);gap:10px;}
+.sb-title{font-family:var(--font-head);font-size:20px;letter-spacing:1px;flex:1;font-style:italic;}
+.sb-target{font-size:12px;color:var(--muted);font-weight:600;}
+.sb-table{width:100%;border-collapse:collapse;}
+.sb-table th{text-align:left;padding:8px 16px;font-size:9px;letter-spacing:1.5px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);text-transform:uppercase;}
+.sb-table td{padding:10px 16px;border-bottom:1px solid var(--border);}
+.sb-table tr:last-child td{border-bottom:none;}
+.sb-rank{font-family:var(--font-head);font-size:18px;color:var(--muted);width:28px;}
+.sb-rank.winning{color:var(--green);}
+.sb-name{font-weight:700;font-size:14px;}
+.sb-score{font-family:var(--font-head);font-size:22px;}
+.sb-score.danger{color:var(--crimson);}
+.sb-score.warning{color:var(--rose);}
+.sb-score.safe{color:var(--green);}
+.sb-bar{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;width:100px;}
+.sb-bar-fill{height:100%;border-radius:2px;transition:width .3s;}
+
+/* Round entry */
+.round-entry{background:var(--surface);border:1px solid rgba(232,80,122,.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.re-title{font-family:var(--font-head);font-size:20px;letter-spacing:1px;color:var(--rose2);margin-bottom:4px;font-style:italic;}
+.re-sub{font-size:12px;color:var(--muted);margin-bottom:16px;font-weight:600;}
+.re-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;margin-top:12px;}
+.player-entry-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.pe-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;transition:border-color .15s;}
+.pe-row.moon-row{border-color:rgba(232,80,122,.35);background:rgba(232,80,122,.04);}
+.pe-name{flex:1;font-weight:700;font-size:14px;}
+.pe-input{width:64px;height:32px;background:var(--surface3);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font-head);font-size:16px;text-align:center;outline:none;}
+.pe-input:focus{border-color:var(--rose);}
+.moon-check{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.moon-check input{accent-color:var(--rose);}
+.moon-check.active{color:var(--rose2);}
+.moon-banner{background:rgba(232,80,122,.1);border:1px solid rgba(232,80,122,.25);border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;color:var(--rose2);margin-bottom:12px;display:none;}
+.moon-banner.show{display:block;}
+
+/* Quick score buttons */
+.quick-hearts{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.qh-btn{font-family:var(--font);font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;border:1px solid rgba(232,80,122,.25);background:var(--rose-dim);color:var(--rose2);cursor:pointer;transition:background .15s;}
+.qh-btn:hover{background:rgba(232,80,122,.2);}
+.queen-btn{border-color:rgba(192,32,64,.3);background:var(--crimson-dim);color:var(--crimson);}
+
+/* History */
+.hand-hist{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;}
+.hh-title{font-family:var(--font-head);font-size:18px;letter-spacing:1px;color:var(--rose2);margin-bottom:12px;font-style:italic;}
+.hh-table{width:100%;border-collapse:collapse;font-size:12px;}
+.hh-table th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border2);color:var(--muted);font-size:9px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase;}
+.hh-table td{padding:7px 8px;border-bottom:1px solid var(--border);}
+.hh-table tr:last-child td{border-bottom:none;}
+
+/* Rules */
+.section-title{font-family:var(--font-head);font-size:26px;letter-spacing:1px;font-style:italic;margin-bottom:6px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;font-weight:600;}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.rule-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.rule-icon{font-size:22px;margin-bottom:8px;}
+.rule-title{font-family:var(--font-head);font-size:15px;letter-spacing:.5px;color:var(--rose2);margin-bottom:6px;font-style:italic;}
+.rule-body{font-size:12px;color:var(--muted);line-height:1.7;font-weight:600;}
+.rule-body strong{color:var(--text);}
+.rule-body ul{padding-left:14px;margin-top:4px;}
+.rule-body li{margin-bottom:3px;}
+.scoring-ref{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}
+.sr-item{text-align:center;padding:12px;}
+.sr-card{font-size:28px;margin-bottom:6px;}
+.sr-name{font-family:var(--font-head);font-size:15px;letter-spacing:.5px;color:var(--text);margin-bottom:2px;}
+.sr-pts{font-family:var(--font-head);font-size:22px;color:var(--rose2);}
+
+.gh-empty{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
+.gh-list{display:flex;flex-direction:column;gap:12px;}
+.gh-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+.gh-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.gh-title{font-family:var(--font-head);font-size:16px;letter-spacing:.5px;color:var(--rose2);font-style:italic;}
+.gh-date{font-size:11px;color:var(--muted);}
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;display:none;align-items:center;justify-content:center;}
+.win-overlay.show{display:flex;}
+.win-modal{background:var(--surface);border:1px solid rgba(232,80,122,.4);border-radius:22px;padding:40px 50px;text-align:center;max-width:400px;}
+.win-icon{font-size:52px;margin-bottom:10px;}
+.win-title{font-family:var(--font-head);font-size:40px;letter-spacing:1px;color:var(--rose2);margin-bottom:4px;font-style:italic;}
+.win-player{font-family:var(--font-head);font-size:24px;margin-bottom:4px;}
+.win-info{font-size:13px;color:var(--muted);margin-bottom:24px;font-weight:600;}
+.win-actions{display:flex;gap:10px;justify-content:center;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:none;align-items:center;justify-content:center;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:26px 30px;width:360px;max-width:92vw;}
+.modal h3{font-family:var(--font-head);font-size:22px;letter-spacing:.5px;color:var(--rose2);margin-bottom:10px;font-style:italic;}
+.modal-body{font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.modal-row{margin-bottom:11px;}
+.modal-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-preview{background:var(--surface2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;}
+@media(max-width:520px){.logo-title{font-size:34px;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo-title"><span>♥</span> Hearts</div>
+      <div class="logo-sub">Score Tracker · Lowest Score Wins</div>
+    </div>
+    <nav class="nav">
+      <button class="active" onclick="showPanel('game',this)">Game</button>
+      <button onclick="showPanel('rules',this)">Rules</button>
+      <button onclick="showPanel('history',this)">History</button>
+    </nav>
+  </header>
+
+  <div class="panel active" id="panel-game">
+    <div id="setup-section">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;">
+        <div style="font-family:var(--font-head);font-size:22px;color:var(--rose2);font-style:italic;margin-bottom:4px;">New Game</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;font-weight:600;">Enter 3–6 player names and set the score limit.</div>
+        <div id="player-inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button class="btn btn-muted btn-sm" onclick="addPlayerInput()">+ Add Player</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div style="font-size:12px;color:var(--muted);font-weight:700;">End game when a player reaches:</div>
+          <input class="text-input" id="target-score" type="number" value="100" min="26" style="width:80px;">
+          <div style="font-size:12px;color:var(--muted);font-weight:600;">pts</div>
+        </div>
+        <button class="btn btn-rose" onclick="startGame()">Start Game →</button>
+      </div>
+    </div>
+
+    <div id="game-section" style="display:none;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
+        <div><div style="font-family:var(--font-head);font-size:22px;letter-spacing:1px;color:var(--rose2);font-style:italic;" id="hand-num">Hand 1</div></div>
+        <div style="width:1px;height:28px;background:var(--border2);"></div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;">End at <span id="target-label" style="color:var(--rose2);font-family:var(--font-head);font-size:16px;">100</span> pts · <strong style="color:var(--text);">Lowest score wins</strong></div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-muted btn-sm" onclick="undoLast()" id="undo-btn" disabled>↩ Undo</button>
+          <button class="btn btn-muted btn-sm" onclick="exportGame()">⬇ Export</button>
+          <button class="btn btn-muted btn-sm" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importGame(event)">
+          <button class="btn btn-red btn-sm" onclick="confirmNewGame()">New Game</button>
+        </div>
+      </div>
+
+      <div class="scoreboard">
+        <div class="sb-header">
+          <div class="sb-title">Standings</div>
+          <div class="sb-target">♥=1pt · Q♠=13pts · Shoot Moon=+26 to others</div>
+        </div>
+        <div id="sb-body"></div>
+      </div>
+
+      <div class="round-entry">
+        <div class="re-title" id="re-title">Hand 1 Scores</div>
+        <div class="re-sub">Enter hearts taken + Queen of Spades (13pts). Or tick "Shot the Moon" for any player who took all 13 hearts + Q♠.</div>
+        <div class="moon-banner" id="moon-banner">🌙 Shoot the Moon detected — all other players will receive 26 points!</div>
+        <div class="player-entry-rows" id="player-entry-rows"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-rose" onclick="submitHand()">Submit Hand →</button>
+          <span id="hand-total-preview" style="font-size:12px;color:var(--muted);font-weight:700;"></span>
+        </div>
+      </div>
+
+      <div class="hand-hist" id="hand-hist" style="display:none;">
+        <div class="hh-title">Hand History</div>
+        <table class="hh-table"><thead id="hh-head"></thead><tbody id="hh-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-rules">
+    <div class="section-title">How to Play</div>
+    <div class="section-sub">Hearts — avoid penalty cards. Lowest score when someone hits the limit wins.</div>
+    <div class="scoring-ref">
+      <div class="sr-item"><div class="sr-card">♥</div><div class="sr-name">Each Heart</div><div class="sr-pts">1 pt</div></div>
+      <div class="sr-item"><div class="sr-card" style="color:var(--crimson)">Q♠</div><div class="sr-name">Queen of Spades</div><div class="sr-pts" style="color:var(--crimson)">13 pts</div></div>
+      <div class="sr-item"><div class="sr-card">🌙</div><div class="sr-name">Shoot the Moon</div><div class="sr-pts">+26 to others</div></div>
+    </div>
+    <div class="rules-grid" id="rules-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div><div class="section-title" style="margin-bottom:0;">Game History</div></div>
+      <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear All</button>
+    </div>
+    <div id="gh-container"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-modal">
+    <div class="win-icon">♥</div>
+    <div class="win-title">Game Over</div>
+    <div class="win-player" id="win-name"></div>
+    <div class="win-info" id="win-info"></div>
+    <div class="win-actions">
+      <button class="btn btn-muted" onclick="closeWin()">View Scores</button>
+      <button class="btn btn-rose" onclick="saveAndNew()">Save & New Game</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-newgame">
+  <div class="modal"><h3>New Game?</h3><div class="modal-body">Save to history?</div>
+    <div class="modal-actions"><button class="btn btn-muted btn-sm" onclick="closeModal('modal-newgame')">Cancel</button><button class="btn btn-muted btn-sm" onclick="discardNew()">Discard</button><button class="btn btn-rose btn-sm" onclick="saveAndNew()">Save & Reset</button></div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal"><h3>Import Game?</h3><div class="modal-body">Replace current game?</div>
+    <div id="import-preview" class="modal-preview"></div>
+    <div class="modal-actions"><button class="btn btn-muted btn-sm" onclick="closeModal('modal-import')">Cancel</button><button class="btn btn-rose btn-sm" onclick="confirmImport()">Load</button></div>
+  </div>
+</div>
+
+<script>
+const RULES=[
+  {icon:'🎯',title:'Objective',body:'Score <strong>as few points as possible</strong>. The game ends when any player reaches the agreed score (usually 100). The player with the <strong>lowest total score</strong> wins.'},
+  {icon:'🃏',title:'Setup & Passing',body:'Deal all 13 cards to each player. Before play, each player passes 3 cards to another player. Direction rotates each hand: left → right → across → no pass → repeat.'},
+  {icon:'🔄',title:'The Play',body:'Player with 2♣ leads the first trick. Players must follow suit if possible. Highest card of the led suit wins the trick. <strong>No trump suit</strong> in Hearts.'},
+  {icon:'♥',title:'Breaking Hearts',body:'Hearts cannot be led until a heart has been discarded in a previous trick (hearts are "broken") — unless you have nothing but hearts in hand.'},
+  {icon:'👑',title:'Scoring',body:'At end of each hand: <ul><li>Each ♥ card = <strong>1 penalty point</strong></li><li>Queen of Spades = <strong>13 penalty points</strong></li><li>All other cards = 0 pts</li></ul>'},
+  {icon:'🌙',title:'Shoot the Moon',body:'If one player takes <strong>all 13 hearts AND the Queen of Spades</strong>, instead of scoring 26 they score <strong>0</strong> and all other players receive <strong>+26 points</strong>. High risk, high reward!'},
+  {icon:'🏆',title:'Winning',body:'Game ends when any player reaches the target (usually 100 pts). The player with the <strong>lowest score</strong> wins. If tied, play continues until one player has the lowest score.'},
+  {icon:'💡',title:'Strategy',body:'<ul><li>Pass the Q♠ if you can — or hold it to "protect" it</li><li>Avoid winning tricks with high spades early</li><li>If someone is collecting all hearts, they may be shooting the moon — block them!</li></ul>'},
+];
+const PLAYER_COLORS=['var(--rose2)','var(--silver)','var(--gold)','#a0e080','#80c8ff','#c0a0ff'];
+
+let state={started:false,players:[],scores:[],targetScore:100,hand:1,hands:[],moonShooter:-1};
+let gameHistory=[];
+let lastBackup=null;
+let pendingImport=null;
+let playerInputCount=4;
+
+function save(){try{localStorage.setItem('hearts_v1',JSON.stringify(state));}catch(e){}}
+function savehist(){try{localStorage.setItem('hearts_hist',JSON.stringify(gameHistory));}catch(e){}}
+function load(){
+  try{const d=localStorage.getItem('hearts_v1');if(d)state=JSON.parse(d);}catch(e){}
+  try{const d=localStorage.getItem('hearts_hist');if(d)gameHistory=JSON.parse(d);}catch(e){}
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showPanel(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='history')renderHistory();
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+function initPlayerInputs(){
+  const container=document.getElementById('player-inputs');
+  if(!container)return;
+  container.innerHTML='';
+  for(let i=0;i<playerInputCount;i++) addPlayerInputEl(container,i);
+}
+function addPlayerInput(){
+  if(playerInputCount>=6)return;
+  const container=document.getElementById('player-inputs');
+  addPlayerInputEl(container,playerInputCount);
+  playerInputCount++;
+}
+function addPlayerInputEl(container,i){
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:10px;';
+  div.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${PLAYER_COLORS[i]};flex-shrink:0;"></div>
+    <input class="text-input" id="pi-${i}" placeholder="Player ${i+1}" style="flex:1;">`;
+  container.appendChild(div);
+}
+
+function startGame(){
+  const players=[];
+  for(let i=0;i<playerInputCount;i++){
+    const inp=document.getElementById('pi-'+i);
+    const name=(inp?.value||'').trim()||'Player '+(i+1);
+    players.push(name);
+  }
+  const target=parseInt(document.getElementById('target-score').value)||100;
+  state={started:true,players,scores:players.map(()=>0),targetScore:target,hand:1,hands:[],moonShooter:-1};
+  try{save();}catch(e){}
+  renderGame();
+}
+
+function toggleMoon(idx){
+  const chk=document.getElementById('moon-check-'+idx);
+  if(!chk)return;
+  // Uncheck others
+  state.players.forEach((_,i)=>{
+    if(i!==idx){
+      const c=document.getElementById('moon-check-'+i);
+      const l=document.getElementById('moon-label-'+i);
+      const r=document.getElementById('pe-row-'+i);
+      if(c)c.checked=false;
+      if(l)l.className='moon-check';
+      if(r)r.className='pe-row';
+      const inp=document.getElementById('pe-input-'+i);
+      if(inp)inp.disabled=false;
+    }
+  });
+  const lbl=document.getElementById('moon-label-'+idx);
+  const row=document.getElementById('pe-row-'+idx);
+  const inp=document.getElementById('pe-input-'+idx);
+  if(chk.checked){
+    if(lbl)lbl.className='moon-check active';
+    if(row)row.className='pe-row moon-row';
+    if(inp){inp.value=26;inp.disabled=true;}
+    state.moonShooter=idx;
+  }else{
+    if(lbl)lbl.className='moon-check';
+    if(row)row.className='pe-row';
+    if(inp){inp.value=0;inp.disabled=false;}
+    state.moonShooter=-1;
+  }
+  const banner=document.getElementById('moon-banner');
+  if(banner)banner.className='moon-banner'+(state.moonShooter>=0?' show':'');
+  updateHandTotal();
+}
+
+function updateHandTotal(){
+  let total=0;
+  state.players.forEach((_,i)=>{
+    const inp=document.getElementById('pe-input-'+i);
+    total+=parseInt(inp?.value)||0;
+  });
+  const p=document.getElementById('hand-total-preview');
+  if(p)p.textContent='Total pts this hand: '+total+(total===26?' ✓':(state.moonShooter>=0?' (Moon: 26 to others)':''));
+}
+
+function addQuickPts(playerIdx,pts){
+  const inp=document.getElementById('pe-input-'+playerIdx);
+  if(!inp||inp.disabled)return;
+  inp.value=Math.min(26,(parseInt(inp.value)||0)+pts);
+  updateHandTotal();
+}
+
+function submitHand(){
+  const handScores=state.players.map((_,i)=>parseInt(document.getElementById('pe-input-'+i)?.value)||0);
+  const moon=state.moonShooter;
+  let finalScores;
+  if(moon>=0){
+    // Shoot the moon — others get 26, shooter gets 0
+    finalScores=handScores.map((_,i)=>i===moon?0:26);
+  }else{
+    finalScores=handScores;
+  }
+  lastBackup={scores:[...state.scores],hands:[...state.hands],hand:state.hand};
+  finalScores.forEach((s,i)=>state.scores[i]+=s);
+  state.hands.push({hand:state.hand,scores:finalScores,moon:moon>=0?state.players[moon]:null,totals:[...state.scores]});
+  state.hand++;
+  state.moonShooter=-1;
+  document.getElementById('undo-btn').disabled=false;
+  try{save();}catch(e){}
+  renderGame();
+  // Check if game over
+  if(state.scores.some(s=>s>=state.targetScore)){
+    const minScore=Math.min(...state.scores);
+    const winnerIdx=state.scores.indexOf(minScore);
+    const triggerIdx=state.scores.indexOf(Math.max(...state.scores));
+    document.getElementById('win-name').textContent=state.players[winnerIdx]+' wins!';
+    document.getElementById('win-info').textContent='Score: '+minScore+' pts · '+state.players[triggerIdx]+' triggered the end with '+state.scores[triggerIdx]+' pts';
+    document.getElementById('win-overlay').classList.add('show');
+  }
+}
+
+function undoLast(){
+  if(!lastBackup)return;
+  state.scores=lastBackup.scores;state.hands=lastBackup.hands;state.hand=lastBackup.hand;
+  lastBackup=null;document.getElementById('undo-btn').disabled=true;
+  try{save();}catch(e){}renderGame();
+}
+
+function renderGame(){
+  if(!state.started){document.getElementById('setup-section').style.display='';document.getElementById('game-section').style.display='none';initPlayerInputs();return;}
+  document.getElementById('setup-section').style.display='none';document.getElementById('game-section').style.display='';
+  document.getElementById('hand-num').textContent='Hand '+state.hand;
+  document.getElementById('re-title').textContent='Hand '+state.hand+' Scores';
+  document.getElementById('target-label').textContent=state.targetScore;
+
+  // Scoreboard
+  const sorted=[...state.players].map((p,i)=>({name:p,score:state.scores[i],i})).sort((a,b)=>a.score-b.score);
+  document.getElementById('sb-body').innerHTML=`<table class="sb-table">
+    <thead><tr><th>#</th><th></th><th>Player</th><th>Score</th><th>Status</th><th>Progress</th></tr></thead>
+    <tbody>${sorted.map((p,rank)=>{
+      const pct=Math.min(100,(p.score/state.targetScore)*100);
+      const scoreClass=pct>=80?'danger':pct>=50?'warning':'safe';
+      const barColor=pct>=80?'var(--crimson)':pct>=50?'var(--rose)':'var(--green)';
+      return `<tr>
+        <td class="sb-rank ${rank===0?'winning':''}">${rank===0?'★':rank+1}</td>
+        <td><div style="width:10px;height:10px;border-radius:50%;background:${PLAYER_COLORS[p.i]}"></div></td>
+        <td class="sb-name">${esc(p.name)}</td>
+        <td class="sb-score ${scoreClass}">${p.score}</td>
+        <td style="font-size:11px;color:var(--muted);font-weight:700;">${state.targetScore-p.score} to end</td>
+        <td><div class="sb-bar"><div class="sb-bar-fill" style="width:${pct}%;background:${barColor};"></div></div></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+
+  // Entry rows
+  document.getElementById('moon-banner').className='moon-banner';
+  document.getElementById('player-entry-rows').innerHTML=state.players.map((name,i)=>`
+    <div class="pe-row" id="pe-row-${i}">
+      <div class="pe-name" style="color:${PLAYER_COLORS[i]}">${esc(name)}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div class="quick-hearts">
+          ${[1,2,3,4,5,6,7,8,9,10,11,12,13].map(h=>`<button class="qh-btn" onclick="addQuickPts(${i},${h})">+${h}♥</button>`).join('')}
+          <button class="qh-btn queen-btn" onclick="addQuickPts(${i},13)">+Q♠</button>
+        </div>
+      </div>
+      <input class="pe-input" id="pe-input-${i}" type="number" min="0" max="26" value="0" oninput="updateHandTotal()">
+      <label class="moon-check" id="moon-label-${i}" for="moon-check-${i}">
+        <input type="checkbox" id="moon-check-${i}" onchange="toggleMoon(${i})"> 🌙 Moon
+      </label>
+    </div>`).join('');
+
+  // Hand history
+  const wrap=document.getElementById('hand-hist');
+  if(!state.hands.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  document.getElementById('hh-head').innerHTML=`<tr><th>Hand</th>${state.players.map(p=>`<th>${esc(p)}</th>`).join('')}<th>Moon</th></tr>`;
+  document.getElementById('hh-body').innerHTML=[...state.hands].reverse().map(h=>`
+    <tr>
+      <td style="color:var(--muted)">H${h.hand}</td>
+      ${h.scores.map((s,i)=>`<td style="font-family:var(--font-head);font-size:14px;color:${s>0?'var(--rose2)':'var(--muted)'}">${s>0?'+'+s:0}</td>`).join('')}
+      <td style="font-size:11px;color:var(--rose2);font-weight:700;">${h.moon?'🌙 '+esc(h.moon):''}</td>
+    </tr>`).join('');
+}
+
+function closeWin(){document.getElementById('win-overlay').classList.remove('show');}
+function confirmNewGame(){closeWin();document.getElementById('modal-newgame').classList.add('show');}
+function discardNew(){closeModal('modal-newgame');resetGame();}
+function saveAndNew(){
+  closeWin();
+  if(state.started&&state.hands.length){
+    const minScore=Math.min(...state.scores);
+    const wi=state.scores.indexOf(minScore);
+    gameHistory.unshift({date:new Date().toLocaleString(),players:state.players,scores:state.scores,hands:state.hands.length,winner:state.players[wi]});
+    if(gameHistory.length>20)gameHistory.pop();savehist();
+  }
+  closeModal('modal-newgame');resetGame();
+}
+function resetGame(){
+  state={started:false,players:[],scores:[],targetScore:100,hand:1,hands:[],moonShooter:-1};
+  playerInputCount=4;lastBackup=null;document.getElementById('undo-btn')&&(document.getElementById('undo-btn').disabled=true);
+  try{save();}catch(e){}renderGame();
+}
+function renderHistory(){
+  const c=document.getElementById('gh-container');
+  if(!gameHistory.length){c.innerHTML='<div class="gh-empty">No saved games yet.</div>';return;}
+  c.innerHTML='<div class="gh-list">'+gameHistory.map((g,gi)=>`
+    <div class="gh-item">
+      <div class="gh-header"><div class="gh-title">Game ${gameHistory.length-gi} — ${g.hands} hands</div><div class="gh-date">${g.date}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;">
+        ${g.players.map((p,i)=>`<div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${PLAYER_COLORS[i]}"></div>
+          <span style="font-weight:700;font-size:13px;">${esc(p)}</span>
+          <span style="font-family:var(--font-head);font-size:17px;color:${i===g.players.indexOf(g.winner)?'var(--green)':'var(--muted)'};">${g.scores[i]}</span>
+          ${g.winner===p?'<span style="font-size:10px;font-weight:700;color:var(--green);background:var(--green-dim);border:1px solid rgba(90,184,112,.3);padding:2px 8px;border-radius:10px;">Winner</span>':''}
+        </div>`).join('')}
+      </div>
+    </div>`).join('')+'</div>';
+}
+function clearHistory(){gameHistory=[];savehist();renderHistory();}
+function exportGame(){
+  const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),state,gameHistory},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=`Hearts_${new Date().toLocaleDateString('en-AU').replace(/\//g,'-')}.json`;a.click();URL.revokeObjectURL(url);
+}
+function importGame(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{const data=JSON.parse(ev.target.result);if(!data.state)throw new Error();pendingImport=data;
+      const s=data.state;
+      document.getElementById('import-preview').innerHTML=`<strong style="color:var(--text)">${new Date(data.exportedAt).toLocaleString()}</strong><br>Hand ${s.hand}, ${s.players?.length||0} players`;
+      document.getElementById('modal-import').classList.add('show');
+    }catch(err){alert('Could not read file.');}e.target.value='';
+  };reader.readAsText(file);
+}
+function confirmImport(){
+  if(!pendingImport)return;state=pendingImport.state;if(pendingImport.gameHistory)gameHistory=pendingImport.gameHistory;
+  lastBackup=null;try{save();savehist();}catch(e){}closeModal('modal-import');renderGame();pendingImport=null;
+}
+function renderRules(){document.getElementById('rules-grid').innerHTML=RULES.map(r=>`<div class="rule-card"><div class="rule-icon">${r.icon}</div><div class="rule-title">${r.title}</div><div class="rule-body">${r.body}</div></div>`).join('');}
+load();renderGame();renderRules();
+</script>
+</body>
+</html>
