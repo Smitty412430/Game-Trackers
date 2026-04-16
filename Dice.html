@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dice Roller — Game Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080d;--surface:#0f0f16;--surface2:#16161f;--surface3:#1d1d28;--surface4:#252535;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f0effe;--muted:#6e6c88;--muted2:#9896b0;
+  --red:#ff4444;--blue:#4a8fff;--green:#3db87a;--yellow:#ffd000;--purple:#9b8fff;
+  --font-head:'Abril Fatface',serif;--font:'DM Sans',sans-serif;
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse at 20% 20%,rgba(155,143,255,0.07) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 80%,rgba(255,68,68,0.06) 0%,transparent 50%);
+  pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:0 20px 80px;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:28px;flex-wrap:wrap;gap:10px;}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:color .15s;}
+.back-btn:hover{color:var(--text);}
+.logo-title{font-family:var(--font-head);font-size:36px;color:var(--text);}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+
+/* Tagline */
+.tagline{text-align:center;margin-bottom:32px;}
+.tagline-main{font-family:var(--font-head);font-size:clamp(28px,6vw,48px);line-height:1;margin-bottom:8px;}
+.tagline-main span{color:var(--purple);}
+.tagline-sub{font-size:14px;color:var(--muted);font-weight:500;font-style:italic;}
+
+/* Config */
+.config-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+.config-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;flex:1;min-width:140px;}
+.config-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;}
+.config-options{display:flex;gap:6px;flex-wrap:wrap;}
+.opt-btn{font-family:var(--font);font-size:13px;font-weight:700;padding:7px 13px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;}
+.opt-btn:hover{color:var(--text);}
+.opt-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;}
+
+/* Dice display */
+.dice-stage{
+  background:var(--surface);border:1px solid var(--border);border-radius:20px;
+  padding:32px 24px;margin-bottom:20px;text-align:center;
+  min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.dice-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:24px;}
+.die{
+  width:72px;height:72px;border-radius:14px;
+  background:var(--surface2);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-head);font-size:32px;color:var(--text);
+  cursor:pointer;transition:all .2s;position:relative;
+  user-select:none;
+}
+.die.rolling{animation:shake .3s ease;}
+.die.held{
+  background:rgba(155,143,255,0.15);
+  border-color:var(--purple);
+  box-shadow:0 0 16px rgba(155,143,255,0.3);
+}
+.die.held::after{
+  content:'HOLD';position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+  font-family:var(--font);font-size:9px;font-weight:700;letter-spacing:1px;
+  color:var(--purple);
+}
+.die:hover:not(.held){border-color:var(--border2);background:var(--surface3);}
+
+.dice-total{font-family:var(--font-head);font-size:48px;color:var(--yellow);line-height:1;margin-bottom:6px;}
+.dice-total-lab{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+
+/* Roll button */
+.roll-btn{
+  width:100%;max-width:320px;
+  font-family:var(--font-head);font-size:22px;
+  letter-spacing:1px;padding:18px 40px;
+  border-radius:50px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--purple) 0%,#7a6ef5 100%);
+  color:#fff;transition:all .2s;
+  box-shadow:0 8px 32px rgba(155,143,255,0.3);
+}
+.roll-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(155,143,255,0.4);}
+.roll-btn:active{transform:translateY(0) scale(.97);}
+.roll-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* Roll count for Yahtzee mode */
+.roll-count{display:flex;gap:8px;justify-content:center;margin-bottom:12px;}
+.roll-pip{width:10px;height:10px;border-radius:50%;background:var(--surface3);border:1px solid var(--border2);transition:all .2s;}
+.roll-pip.used{background:var(--purple);}
+.roll-count-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;text-align:center;margin-bottom:16px;}
+
+/* Mode selector */
+.mode-row{display:flex;gap:8px;margin-bottom:20px;}
+.mode-btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;text-align:center;text-transform:uppercase;letter-spacing:.5px;}
+.mode-btn:hover{color:var(--text);}
+.mode-btn.active{background:var(--surface4);color:var(--text);border-color:var(--border2);}
+
+/* Dealer picker */
+.dealer-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.dealer-title{font-family:var(--font-head);font-size:18px;margin-bottom:4px;}
+.dealer-sub{font-size:12px;color:var(--muted);margin-bottom:16px;font-weight:500;}
+.dealer-players{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.dealer-player-row{display:flex;align-items:center;gap:10px;}
+.dealer-player-input{flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;outline:none;border-radius:8px;padding:8px 12px;transition:border-color .15s;}
+.dealer-player-input:focus{border-color:var(--purple);}
+.dealer-player-input::placeholder{color:var(--muted);}
+.dp-remove{width:28px;height:28px;border-radius:7px;border:1px solid var(--border2);background:var(--surface3);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dp-remove:hover{color:var(--red);}
+.dealer-result{
+  background:var(--surface2);border:1px solid rgba(255,208,0,0.3);
+  border-radius:12px;padding:16px;text-align:center;margin-top:12px;
+  display:none;
+}
+.dealer-result.show{display:block;}
+.dealer-result-name{font-family:var(--font-head);font-size:28px;color:var(--yellow);margin-bottom:4px;}
+.dealer-result-sub{font-size:12px;color:var(--muted);font-weight:600;}
+
+/* History */
+.history-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+.history-title{font-family:var(--font-head);font-size:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.history-clear{font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;text-transform:uppercase;letter-spacing:.5px;border:none;background:none;transition:color .15s;}
+.history-clear:hover{color:var(--red);}
+.history-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:13px;}
+.history-dice{display:flex;gap:6px;flex-wrap:wrap;}
+.history-die{width:28px;height:28px;border-radius:6px;background:var(--surface3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:14px;color:var(--text);}
+.history-total{font-family:var(--font-head);font-size:18px;color:var(--yellow);}
+.history-time{font-size:10px;color:var(--muted);margin-left:8px;}
+.empty-history{text-align:center;color:var(--muted);padding:20px;font-size:13px;font-weight:500;}
+
+/* Die face SVG dots */
+.die-face{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
+
+@keyframes shake{
+  0%{transform:rotate(-8deg) scale(.95);}
+  25%{transform:rotate(8deg) scale(1.05);}
+  50%{transform:rotate(-6deg) scale(.97);}
+  75%{transform:rotate(6deg) scale(1.03);}
+  100%{transform:rotate(0deg) scale(1);}
+}
+
+.btn{font-family:var(--font);font-size:12px;font-weight:700;padding:9px 18px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;text-transform:uppercase;letter-spacing:.5px;}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}.btn-muted:hover{background:var(--surface4);}
+.btn-purple{background:rgba(155,143,255,.15);color:var(--purple);border:1px solid rgba(155,143,255,.3);}.btn-purple:hover{background:rgba(155,143,255,.25);}
+.btn-sm{font-size:11px;padding:6px 13px;}
+
+@media(max-width:480px){
+  .die{width:60px;height:60px;font-size:26px;}
+  .dice-total{font-size:38px;}
+  .roll-btn{font-size:18px;padding:16px 32px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back-btn" href="index.html">← Back to Games</a>
+    <div>
+      <div class="logo-title">🎲 Dice</div>
+      <div class="logo-sub">Game Night Roller</div>
+    </div>
+  </header>
+
+  <div class="tagline">
+    <div class="tagline-main">Roll the <span>bones.</span></div>
+    <div class="tagline-sub">For when the real ones are under the couch. Again.</div>
+  </div>
+
+  <!-- Mode selector -->
+  <div class="mode-row">
+    <button class="mode-btn active" onclick="setMode('standard',this)">🎲 Standard Roll</button>
+    <button class="mode-btn" onclick="setMode('yahtzee',this)">⚄ Yahtzee Mode</button>
+    <button class="mode-btn" onclick="setMode('dealer',this)">🃏 Pick a Dealer</button>
+  </div>
+
+  <!-- STANDARD MODE -->
+  <div id="mode-standard">
+    <!-- Config -->
+    <div class="config-row">
+      <div class="config-card">
+        <div class="config-label">Number of Dice</div>
+        <div class="config-options" id="dice-count-opts">
+          <button class="opt-btn active" onclick="setCount(1,this)">1</button>
+          <button class="opt-btn" onclick="setCount(2,this)">2</button>
+          <button class="opt-btn" onclick="setCount(3,this)">3</button>
+          <button class="opt-btn" onclick="setCount(4,this)">4</button>
+          <button class="opt-btn" onclick="setCount(5,this)">5</button>
+          <button class="opt-btn" onclick="setCount(6,this)">6</button>
+        </div>
+      </div>
+      <div class="config-card">
+        <div class="config-label">Dice Type</div>
+        <div class="config-options" id="dice-type-opts">
+          <button class="opt-btn active" onclick="setType(6,this)">d6</button>
+          <button class="opt-btn" onclick="setType(4,this)">d4</button>
+          <button class="opt-btn" onclick="setType(8,this)">d8</button>
+          <button class="opt-btn" onclick="setType(10,this)">d10</button>
+          <button class="opt-btn" onclick="setType(12,this)">d12</button>
+          <button class="opt-btn" onclick="setType(20,this)">d20</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dice stage -->
+    <div class="dice-stage">
+      <div class="dice-row" id="std-dice-row"></div>
+      <div class="dice-total" id="std-total">—</div>
+      <div class="dice-total-lab" id="std-total-lab">tap to roll</div>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-bottom:20px;">
+      <button class="roll-btn" onclick="rollStandard()" id="std-roll-btn">Roll</button>
+    </div>
+  </div>
+
+  <!-- YAHTZEE MODE -->
+  <div id="mode-yahtzee" style="display:none;">
+    <div style="background:var(--surface);border:1px solid rgba(155,143,255,0.2);border-radius:var(--radius);padding:16px;margin-bottom:16px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;">Tap dice to hold them, then roll again. 3 rolls per turn.</div>
+      <div class="roll-count-label" id="ytz-roll-label">Roll 1 of 3</div>
+      <div class="roll-count" id="ytz-roll-pips"></div>
+    </div>
+
+    <div class="dice-stage">
+      <div class="dice-row" id="ytz-dice-row"></div>
+      <div class="dice-total" id="ytz-total">—</div>
+      <div class="dice-total-lab" id="ytz-total-lab">tap dice to hold · roll up to 3 times</div>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+      <button class="roll-btn" onclick="rollYahtzee()" id="ytz-roll-btn" style="max-width:200px;font-size:18px;padding:16px 32px;">Roll</button>
+      <button class="btn btn-muted" onclick="resetYahtzee()" style="border-radius:50px;padding:16px 24px;font-size:14px;">New Turn</button>
+    </div>
+  </div>
+
+  <!-- DEALER PICKER MODE -->
+  <div id="mode-dealer" style="display:none;">
+    <div class="dealer-section">
+      <div class="dealer-title">🃏 Who deals first?</div>
+      <div class="dealer-sub">Add your players and we'll pick the dealer randomly. Highest roll goes first — no arguments!</div>
+      <div class="dealer-players" id="dealer-players-list"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-purple btn-sm" onclick="addDealerPlayer()">+ Add Player</button>
+        <button class="btn btn-muted btn-sm" onclick="pickDealer()">🎲 Pick Dealer</button>
+      </div>
+      <div class="dealer-result" id="dealer-result">
+        <div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Dealer is...</div>
+        <div class="dealer-result-name" id="dealer-winner"></div>
+        <div class="dealer-result-sub" id="dealer-rolls"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Roll History -->
+  <div class="history-wrap" id="history-wrap" style="display:none;">
+    <div class="history-title">
+      Recent Rolls
+      <button class="history-clear" onclick="clearHistory()">Clear</button>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- Footer note -->
+  <div style="text-align:center;margin-top:28px;font-size:12px;color:var(--muted);font-style:italic;opacity:.6;">
+    Statistically identical to real dice. Psychologically inferior. We get it. 🎲
+  </div>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let diceCount=1;
+let diceType=6;
+let currentMode='standard';
+let rollHistory=[];
+
+// Yahtzee state
+let ytzValues=[0,0,0,0,0];
+let ytzHeld=[false,false,false,false,false];
+let ytzRoll=0;
+
+// Dealer state
+let dealerPlayers=['','','',''];
+
+// ── UTILITIES ─────────────────────────────────────────────────────────────────
+function rand(sides){return Math.floor(Math.random()*sides)+1;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Die face — dots for d6, number for others
+function dieFace(val,sides,size=32){
+  if(sides!==6) return `<span style="font-family:var(--font-head);font-size:${size}px;">${val}</span>`;
+  const dots={
+    1:[[50,50]],
+    2:[[25,25],[75,75]],
+    3:[[25,25],[50,50],[75,75]],
+    4:[[25,25],[75,25],[25,75],[75,75]],
+    5:[[25,25],[75,25],[50,50],[25,75],[75,75]],
+    6:[[25,25],[75,25],[25,50],[75,50],[25,75],[75,75]]
+  };
+  const d=dots[val]||[];
+  const r=size===32?5:4;
+  const svgSize=size+10;
+  return `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 100 100">${d.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="var(--text)"/>`).join('')}</svg>`;
+}
+
+// ── MODE ──────────────────────────────────────────────────────────────────────
+function setMode(mode,btn){
+  currentMode=mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('mode-standard').style.display=mode==='standard'?'':'none';
+  document.getElementById('mode-yahtzee').style.display=mode==='yahtzee'?'':'none';
+  document.getElementById('mode-dealer').style.display=mode==='dealer'?'':'none';
+  document.getElementById('history-wrap').style.display=mode==='dealer'?'none':(rollHistory.length?'':'none');
+  if(mode==='yahtzee'){initYahtzee();}
+  if(mode==='dealer'){initDealer();}
+  if(mode==='standard'){renderStdDice([]);}
+}
+
+// ── STANDARD ROLL ─────────────────────────────────────────────────────────────
+function setCount(n,btn){
+  diceCount=n;
+  document.querySelectorAll('#dice-count-opts .opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStdDice([]);
+}
+function setType(n,btn){
+  diceType=n;
+  document.querySelectorAll('#dice-type-opts .opt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStdDice([]);
+}
+
+function renderStdDice(values){
+  const row=document.getElementById('std-dice-row');
+  if(!values.length){
+    row.innerHTML=Array.from({length:diceCount},(_,i)=>`
+      <div class="die" id="std-die-${i}" style="opacity:.4;">
+        ${dieFace(diceType===6?1:Math.ceil(diceType/2),diceType)}
+      </div>`).join('');
+    document.getElementById('std-total').textContent='—';
+    document.getElementById('std-total-lab').textContent='tap to roll';
+    return;
+  }
+  row.innerHTML=values.map((v,i)=>`
+    <div class="die" id="std-die-${i}">
+      ${dieFace(v,diceType)}
+    </div>`).join('');
+  const total=values.reduce((a,b)=>a+b,0);
+  document.getElementById('std-total').textContent=total;
+  document.getElementById('std-total-lab').textContent=diceCount>1?`total of ${diceCount} dice`:`rolled a ${total}`;
+}
+
+function rollStandard(){
+  const btn=document.getElementById('std-roll-btn');
+  btn.disabled=true;
+  const row=document.getElementById('std-dice-row');
+  // Add rolling class
+  row.querySelectorAll('.die').forEach(d=>d.classList.add('rolling'));
+  setTimeout(()=>{
+    const values=Array.from({length:diceCount},()=>rand(diceType));
+    renderStdDice(values);
+    addHistory(values,diceType);
+    btn.disabled=false;
+  },320);
+}
+
+// ── YAHTZEE MODE ──────────────────────────────────────────────────────────────
+function initYahtzee(){
+  ytzValues=[0,0,0,0,0];
+  ytzHeld=[false,false,false,false,false];
+  ytzRoll=0;
+  renderYtzDice();
+  updateYtzRollUI();
+}
+
+function renderYtzDice(){
+  const row=document.getElementById('ytz-dice-row');
+  row.innerHTML=ytzValues.map((v,i)=>`
+    <div class="die${ytzHeld[i]?' held':''}" onclick="toggleHold(${i})" id="ytz-die-${i}" style="${v===0?'opacity:.4':''}">
+      ${v===0?dieFace(1,6):dieFace(v,6)}
+    </div>`).join('');
+  const total=ytzValues.filter((_,i)=>ytzValues[i]>0).reduce((a,b)=>a+b,0);
+  document.getElementById('ytz-total').textContent=ytzRoll===0?'—':total;
+  document.getElementById('ytz-total-lab').textContent=ytzRoll===0?'tap Roll to start':'tap dice to hold · roll again or new turn';
+}
+
+function updateYtzRollUI(){
+  const label=document.getElementById('ytz-roll-label');
+  const pips=document.getElementById('ytz-roll-pips');
+  const btn=document.getElementById('ytz-roll-btn');
+  label.textContent=ytzRoll===0?'Roll 1 of 3':`Roll ${Math.min(ytzRoll+1,3)} of 3`;
+  pips.innerHTML=[0,1,2].map(i=>`<div class="roll-pip${i<ytzRoll?' used':''}"></div>`).join('');
+  btn.disabled=ytzRoll>=3;
+  btn.textContent=ytzRoll>=3?'No rolls left':'Roll';
+}
+
+function toggleHold(i){
+  if(ytzRoll===0||ytzRoll>=3)return;
+  ytzHeld[i]=!ytzHeld[i];
+  renderYtzDice();
+}
+
+function rollYahtzee(){
+  if(ytzRoll>=3)return;
+  const btn=document.getElementById('ytz-roll-btn');
+  btn.disabled=true;
+  // Animate unheld dice
+  ytzValues.forEach((_,i)=>{
+    if(!ytzHeld[i]){
+      const die=document.getElementById('ytz-die-'+i);
+      if(die)die.classList.add('rolling');
+    }
+  });
+  setTimeout(()=>{
+    ytzValues=ytzValues.map((v,i)=>ytzHeld[i]?v:rand(6));
+    ytzRoll++;
+    updateYtzRollUI();
+    renderYtzDice();
+    if(ytzRoll>=3){
+      addHistory(ytzValues,6);
+    }
+    btn.disabled=ytzRoll>=3;
+  },320);
+}
+
+function resetYahtzee(){
+  initYahtzee();
+}
+
+// ── DEALER PICKER ─────────────────────────────────────────────────────────────
+function initDealer(){
+  renderDealerPlayers();
+}
+
+function renderDealerPlayers(){
+  document.getElementById('dealer-players-list').innerHTML=dealerPlayers.map((p,i)=>`
+    <div class="dealer-player-row">
+      <input class="dealer-player-input" id="dp-${i}" value="${esc(p)}" placeholder="Player ${i+1}" oninput="dealerPlayers[${i}]=this.value">
+      ${dealerPlayers.length>2?`<button class="dp-remove" onclick="removeDealerPlayer(${i})">✕</button>`:''}
+    </div>`).join('');
+  document.getElementById('dealer-result').classList.remove('show');
+}
+
+function addDealerPlayer(){
+  if(dealerPlayers.length>=8)return;
+  dealerPlayers.push('');
+  renderDealerPlayers();
+  document.getElementById(`dp-${dealerPlayers.length-1}`).focus();
+}
+
+function removeDealerPlayer(i){
+  if(dealerPlayers.length<=2)return;
+  dealerPlayers.splice(i,1);
+  renderDealerPlayers();
+}
+
+function pickDealer(){
+  // Sync current input values
+  dealerPlayers=dealerPlayers.map((_,i)=>{
+    const inp=document.getElementById('dp-'+i);
+    return inp?inp.value.trim()||`Player ${i+1}`:dealerPlayers[i]||`Player ${i+1}`;
+  });
+  const rolls=dealerPlayers.map(p=>({name:p,roll:rand(6)}));
+  const max=Math.max(...rolls.map(r=>r.roll));
+  const winners=rolls.filter(r=>r.roll===max);
+  const winner=winners[Math.floor(Math.random()*winners.length)];
+  document.getElementById('dealer-winner').textContent=winner.name+' deals!';
+  document.getElementById('dealer-rolls').textContent=rolls.map(r=>r.name+': rolled '+r.roll).join(' · ');
+  document.getElementById('dealer-result').classList.add('show');
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function addHistory(values,sides){
+  const now=new Date();
+  const time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  rollHistory.unshift({values:[...values],sides,time,total:values.reduce((a,b)=>a+b,0)});
+  if(rollHistory.length>20)rollHistory.pop();
+  renderHistory();
+}
+
+function renderHistory(){
+  const wrap=document.getElementById('history-wrap');
+  if(!rollHistory.length){wrap.style.display='none';return;}
+  if(currentMode==='dealer'){wrap.style.display='none';return;}
+  wrap.style.display='';
+  document.getElementById('history-list').innerHTML=rollHistory.map(h=>`
+    <div class="history-item">
+      <div class="history-dice">
+        ${h.values.map(v=>`<div class="history-die">${h.sides===6?v:v}</div>`).join('')}
+        ${h.sides!==6?`<span style="font-size:11px;color:var(--muted);align-self:center;">d${h.sides}</span>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div class="history-total">${h.total}</div>
+        <div class="history-time">${h.time}</div>
+      </div>
+    </div>`).join('');
+}
+
+function clearHistory(){rollHistory=[];renderHistory();}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderStdDice([]);
+renderDealerPlayers();
+</script>
+</body>
+</html>
