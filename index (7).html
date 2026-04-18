@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wanna Score? — Game Night Score Trackers</title>
+<meta name="description" content="Wanna Score? Free score trackers for 9 card and dice games. No ads, no accounts, no nonsense. Phase 10, UNO, Yahtzee, 500, Cribbage and more.">
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070c;
+  --surface:#0d0d16;
+  --surface2:#14141f;
+  --surface3:#1c1c2a;
+  --surface4:#252535;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.13);
+  --text:#f2f0ff;
+  --muted:#6a6880;
+  --muted2:#9896b0;
+  --hot:#ff3d6b;
+  --hot2:#ff6b8a;
+  --hot-dim:rgba(255,61,107,0.12);
+  --purple:#9b8fff;
+  --purple-dim:rgba(155,143,255,0.12);
+  --teal:#3ee8c8;
+  --teal-dim:rgba(62,232,200,0.1);
+  --gold:#ffcc00;
+  --gold-dim:rgba(255,204,0,0.1);
+  --green:#3db87a;
+  --font-head:'Abril Fatface',serif;
+  --font:'DM Sans',sans-serif;
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* Animated background */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 10% 0%,rgba(255,61,107,0.1) 0%,transparent 45%),
+    radial-gradient(ellipse at 90% 5%,rgba(155,143,255,0.09) 0%,transparent 45%),
+    radial-gradient(ellipse at 90% 95%,rgba(62,232,200,0.07) 0%,transparent 45%),
+    radial-gradient(ellipse at 10% 95%,rgba(255,204,0,0.06) 0%,transparent 45%);
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 24px 100px;}
+
+/* ── HERO ── */
+.hero{
+  text-align:center;
+  padding:80px 0 60px;
+  position:relative;
+}
+
+/* Floating card suits */
+.suit-float{
+  position:absolute;font-family:var(--font-head);
+  opacity:.06;pointer-events:none;user-select:none;
+  animation:float 6s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-5deg);}50%{transform:translateY(-18px) rotate(5deg);}}
+
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--hot2);
+  background:rgba(255,61,107,0.1);
+  border:1px solid rgba(255,61,107,0.25);
+  border-radius:40px;padding:7px 18px;margin-bottom:28px;
+}
+.hero-eyebrow::before{content:'●';font-size:7px;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+.hero-headline{
+  font-family:var(--font-head);
+  line-height:.92;letter-spacing:-2px;
+  margin-bottom:6px;
+}
+.hero-headline .l1{
+  display:block;
+  font-size:clamp(52px,12vw,108px);
+  color:var(--text);
+}
+.hero-headline .l2{
+  display:block;
+  font-size:clamp(52px,12vw,108px);
+  background:linear-gradient(135deg,var(--hot) 0%,var(--purple) 40%,var(--teal) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+.hero-tagline{
+  font-size:16px;color:var(--muted2);
+  max-width:440px;margin:24px auto 0;
+  line-height:1.6;font-weight:400;
+}
+.hero-tagline strong{color:var(--text);font-weight:600;}
+
+/* Trust pills */
+.trust-bar{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;flex-wrap:wrap;margin-top:28px;
+}
+.tp{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:var(--muted2);
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:40px;padding:8px 16px;
+}
+.tp-dot{width:6px;height:6px;border-radius:50%;}
+
+/* Phone mockups */
+.mockups{
+  display:flex;align-items:flex-end;justify-content:center;
+  gap:16px;margin:52px 0 64px;position:relative;
+}
+.mockups::after{
+  content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:60%;height:35%;
+  background:radial-gradient(ellipse,rgba(255,61,107,0.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.phone{
+  flex-shrink:0;border-radius:36px;
+  background:#0a0a14;
+  border:2px solid rgba(255,255,255,0.1);
+  box-shadow:0 28px 70px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,0.06);
+  overflow:hidden;transition:transform .3s ease;
+}
+.phone:hover{transform:translateY(-8px) scale(1.02);}
+.phone.sm{width:155px;}
+.phone.lg{width:178px;transform:translateY(-22px);}
+.phone.lg:hover{transform:translateY(-30px) scale(1.02);}
+.phone-notch{width:56px;height:20px;background:#0a0a14;border-radius:0 0 14px 14px;margin:0 auto;border:2px solid rgba(255,255,255,0.07);border-top:none;}
+.phone-screen{margin:0 7px 7px;border-radius:0 0 28px 28px;overflow:hidden;background:#08080d;}
+
+/* Screen content */
+.s-phase{padding:13px 11px;}
+.s-p-hd{font-family:var(--font-head);font-size:10px;color:#9b8fff;margin-bottom:9px;}
+.s-p-row{display:flex;align-items:center;justify-content:space-between;background:rgba(155,143,255,0.08);border:1px solid rgba(155,143,255,0.15);border-radius:7px;padding:6px 9px;margin-bottom:5px;}
+.s-p-name{font-size:9px;font-weight:700;color:#f0effe;}
+.s-p-ph{font-size:8px;color:#9b8fff;}
+.s-p-sc{font-family:var(--font-head);font-size:13px;color:#9b8fff;}
+.s-p-dealer{font-size:8px;color:#ffcc00;background:rgba(255,204,0,0.1);padding:2px 7px;border-radius:4px;margin-top:5px;text-align:center;}
+
+.s-ytz{padding:13px 11px;text-align:center;}
+.s-y-hd{font-family:var(--font-head);font-size:10px;color:#ffcc00;margin-bottom:10px;}
+.s-y-dice{display:flex;justify-content:center;gap:5px;margin-bottom:8px;}
+.s-y-die{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.14);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;color:#f0effe;}
+.s-y-die.h{background:rgba(255,204,0,0.15);border-color:#ffcc00;color:#ffcc00;}
+.s-y-total{font-family:var(--font-head);font-size:28px;color:#ffcc00;line-height:1;margin-bottom:4px;}
+.s-y-lab{font-size:7px;color:#6a6880;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.s-y-btn{background:linear-gradient(135deg,#d4862a,#f0a83c);border-radius:16px;padding:6px 18px;font-size:9px;font-weight:700;color:#1a0800;display:inline-block;}
+.s-y-sug{margin-top:8px;background:rgba(255,255,255,0.05);border-radius:6px;padding:7px 8px;text-align:left;}
+.s-y-sug-row{display:flex;justify-content:space-between;font-size:8px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+
+.s-500{padding:11px 9px;}
+.s-5-hd{font-family:var(--font-head);font-size:10px;color:#4a8fff;margin-bottom:7px;}
+.s-5-teams{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px;}
+.s-5-t{background:rgba(74,143,255,0.08);border:1px solid rgba(74,143,255,0.2);border-radius:7px;padding:7px;text-align:center;}
+.s-5-tn{font-size:7px;color:#9896b0;margin-bottom:2px;}
+.s-5-ts{font-family:var(--font-head);font-size:16px;color:#4a8fff;}
+.s-5-bid{background:rgba(232,184,75,0.08);border:1px solid rgba(232,184,75,0.2);border-radius:5px;padding:5px 7px;font-size:8px;color:#e8b84b;text-align:center;margin-bottom:5px;}
+
+/* ── WHY SECTION ── */
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:56px;}
+.why-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;}
+.why-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.why-card:nth-child(1)::before{background:linear-gradient(90deg,var(--hot),transparent);}
+.why-card:nth-child(2)::before{background:linear-gradient(90deg,var(--purple),transparent);}
+.why-card:nth-child(3)::before{background:linear-gradient(90deg,var(--teal),transparent);}
+.why-card:nth-child(4)::before{background:linear-gradient(90deg,var(--gold),transparent);}
+.why-icon{font-size:24px;margin-bottom:10px;}
+.why-title{font-weight:700;font-size:14px;margin-bottom:4px;color:var(--text);}
+.why-body{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* ── SECTION HEADS ── */
+.sec-head{margin-bottom:18px;}
+.sec-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.sec-eyebrow::after{content:'';flex:1;height:1px;background:var(--border);}
+.sec-title{font-family:var(--font-head);font-size:26px;color:var(--text);}
+
+/* ── GAME CARDS ── */
+.game-group{margin-bottom:44px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(278px,1fr));gap:12px;}
+.card{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;position:relative;overflow:hidden;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;}
+.card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;}
+.card:hover{transform:translateY(-4px);box-shadow:0 20px 56px rgba(0,0,0,.55);}
+.card:hover::before{opacity:1;}
+.c1{border-color:rgba(155,143,255,0.12);}.c1::before{background:radial-gradient(ellipse at 0% 0%,rgba(155,143,255,0.08) 0%,transparent 60%);}.c1:hover{border-color:rgba(155,143,255,0.35);}
+.c2{border-color:rgba(76,175,110,0.12);}.c2::before{background:radial-gradient(ellipse at 0% 0%,rgba(76,175,110,0.08) 0%,transparent 60%);}.c2:hover{border-color:rgba(76,175,110,0.35);}
+.c3{border-color:rgba(255,61,107,0.12);}.c3::before{background:radial-gradient(ellipse at 0% 0%,rgba(255,61,107,0.08) 0%,transparent 60%);}.c3:hover{border-color:rgba(255,61,107,0.35);}
+.c4{border-color:rgba(255,204,0,0.12);}.c4::before{background:radial-gradient(ellipse at 0% 0%,rgba(255,204,0,0.08) 0%,transparent 60%);}.c4:hover{border-color:rgba(255,204,0,0.35);}
+.c5{border-color:rgba(74,143,255,0.12);}.c5::before{background:radial-gradient(ellipse at 0% 0%,rgba(74,143,255,0.08) 0%,transparent 60%);}.c5:hover{border-color:rgba(74,143,255,0.35);}
+.c6{border-color:rgba(62,232,200,0.12);}.c6::before{background:radial-gradient(ellipse at 0% 0%,rgba(62,232,200,0.08) 0%,transparent 60%);}.c6:hover{border-color:rgba(62,232,200,0.35);}
+.c7{border-color:rgba(255,120,80,0.12);}.c7::before{background:radial-gradient(ellipse at 0% 0%,rgba(255,120,80,0.08) 0%,transparent 60%);}.c7:hover{border-color:rgba(255,120,80,0.35);}
+.c8{border-color:rgba(130,200,60,0.12);}.c8::before{background:radial-gradient(ellipse at 0% 0%,rgba(130,200,60,0.08) 0%,transparent 60%);}.c8:hover{border-color:rgba(130,200,60,0.35);}
+.c9{border-color:rgba(220,100,180,0.12);}.c9::before{background:radial-gradient(ellipse at 0% 0%,rgba(220,100,180,0.08) 0%,transparent 60%);}.c9:hover{border-color:rgba(220,100,180,0.35);}
+.deco{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:var(--font-head);font-size:64px;line-height:1;opacity:.05;pointer-events:none;transition:opacity .2s;}
+.card:hover .deco{opacity:.10;}
+.ct{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+.i1{background:rgba(155,143,255,0.15);}.i2{background:rgba(76,175,110,0.15);}.i3{background:rgba(255,61,107,0.15);}
+.i4{background:rgba(255,204,0,0.15);}.i5{background:rgba(74,143,255,0.15);}.i6{background:rgba(62,232,200,0.15);}
+.i7{background:rgba(255,120,80,0.15);}.i8{background:rgba(130,200,60,0.15);}.i9{background:rgba(220,100,180,0.15);}
+.cn{font-family:var(--font-head);font-size:19px;letter-spacing:.5px;line-height:1;}
+.n1{color:#9b8fff;}.n2{color:#4caf6e;}.n3{color:#ff3d6b;}.n4{color:#ffcc00;}.n5{color:#4a8fff;}.n6{color:#3ee8c8;}.n7{color:#ff7850;}.n8{color:#82c83c;}.n9{color:#dc64b4;}
+.tl{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;max-width:240px;}
+.pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;}
+.pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface2);}
+.ob{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:8px 16px;border-radius:40px;border:1px solid var(--border2);color:var(--text);background:var(--surface2);transition:all .2s;}
+.card:hover .ob{border-color:rgba(255,255,255,0.22);background:var(--surface3);}
+.arr{transition:transform .2s;}.card:hover .arr{transform:translateX(4px);}
+
+/* ── SCORE SHEET CALLOUT ── */
+.library-cta{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:20px;padding:28px 32px;
+  margin-bottom:48px;
+  display:flex;align-items:center;
+  justify-content:space-between;
+  gap:24px;flex-wrap:wrap;
+  position:relative;overflow:hidden;
+}
+.library-cta::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 100% 50%,rgba(155,143,255,0.07) 0%,transparent 60%);
+  pointer-events:none;
+}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font);font-size:13px;font-weight:700;
+  padding:14px 28px;border-radius:40px;
+  background:linear-gradient(135deg,var(--hot) 0%,var(--purple) 100%);
+  color:#fff;text-decoration:none;white-space:nowrap;
+  box-shadow:0 6px 24px rgba(255,61,107,0.3);
+  transition:all .2s;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(255,61,107,0.4);}
+
+/* ── ORIGIN STORY ── */
+.origin{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:20px;padding:32px 36px;margin-bottom:56px;
+  display:flex;gap:20px;align-items:flex-start;
+  position:relative;overflow:hidden;
+}
+.origin::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 0% 100%,rgba(255,61,107,0.06) 0%,transparent 60%);
+  pointer-events:none;
+}
+.origin-q{font-size:64px;line-height:.8;color:var(--hot);font-family:var(--font-head);flex-shrink:0;margin-top:-8px;opacity:.6;}
+.origin-text{font-size:15px;color:var(--muted2);line-height:1.75;position:relative;}
+.origin-text strong{color:var(--text);font-weight:600;}
+
+/* ── FOOTER ── */
+.footer{text-align:center;border-top:1px solid var(--border);padding-top:32px;}
+.footer-logo{font-family:var(--font-head);font-size:28px;margin-bottom:6px;}
+.footer-logo span{color:var(--hot);}
+.footer-sub{font-size:12px;color:var(--muted);opacity:.5;margin-bottom:14px;}
+.coming-pills{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:20px;}
+.cp{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);color:var(--muted);opacity:.5;}
+.footer-note{font-size:11px;color:var(--muted);opacity:.3;}
+
+@keyframes ci{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.card{animation:ci .4s ease both;}
+.card:nth-child(1){animation-delay:.04s;}.card:nth-child(2){animation-delay:.08s;}.card:nth-child(3){animation-delay:.12s;}.card:nth-child(4){animation-delay:.16s;}
+
+@media(max-width:520px){
+  .hero{padding:48px 0 36px;}
+  .grid{grid-template-columns:1fr;}
+  .why{grid-template-columns:1fr 1fr;}
+  .origin{flex-direction:column;gap:10px;padding:22px;}
+  .mockups{gap:8px;}
+  .phone.sm{width:115px;}
+  .phone.lg{width:135px;}
+  .library-cta{flex-direction:column;}
+  .deco{font-size:48px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <!-- Floating suits -->
+    <div class="suit-float" style="font-size:120px;top:-10px;left:-20px;animation-delay:0s;">♠</div>
+    <div class="suit-float" style="font-size:90px;top:20px;right:-10px;animation-delay:1.5s;color:var(--hot);">♥</div>
+    <div class="suit-float" style="font-size:70px;bottom:20px;left:5%;animation-delay:3s;color:var(--hot);">♦</div>
+    <div class="suit-float" style="font-size:80px;bottom:0;right:8%;animation-delay:2s;">♣</div>
+
+    <div class="hero-eyebrow">🃏 Game Night Sorted</div>
+    <h1 class="hero-headline">
+      <span class="l1">Wanna</span>
+      <span class="l2">Score?</span>
+    </h1>
+    <p class="hero-tagline">
+      Score trackers for <strong>9 card and dice games</strong> — plus 50+ score sheets and a built-in dice roller. Built for real game nights. No downloads, no accounts, no ads. Ever.
+    </p>
+    <div class="trust-bar">
+      <div class="tp"><div class="tp-dot" style="background:var(--hot);"></div> Zero ads</div>
+      <div class="tp"><div class="tp-dot" style="background:var(--purple);"></div> No account needed</div>
+      <div class="tp"><div class="tp-dot" style="background:var(--teal);"></div> Any device</div>
+      <div class="tp"><div class="tp-dot" style="background:var(--gold);"></div> Free on web</div>
+    </div>
+  </div>
+
+  <!-- PHONE MOCKUPS -->
+  <div class="mockups">
+
+    <!-- Phase 10 -->
+    <a class="phone sm" href="Phase10Tracker.html" style="text-decoration:none;">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="s-phase">
+          <div class="s-p-hd">🃏 Phase 10</div>
+          <div class="s-p-row"><div><div class="s-p-name">Sarah</div><div class="s-p-ph">Phase 6 ✓</div></div><div class="s-p-sc">240</div></div>
+          <div class="s-p-row"><div><div class="s-p-name">Mike</div><div class="s-p-ph">Phase 5 ✓</div></div><div class="s-p-sc">185</div></div>
+          <div class="s-p-row" style="border-color:rgba(255,204,0,0.3);background:rgba(255,204,0,0.06);"><div><div class="s-p-name">Jess</div><div class="s-p-ph">Phase 7 ✓</div></div><div class="s-p-sc" style="color:#ffcc00;">310</div></div>
+          <div class="s-p-row"><div><div class="s-p-name">Tom</div><div class="s-p-ph">Phase 4 ✓</div></div><div class="s-p-sc">150</div></div>
+          <div class="s-p-dealer">🃏 Tom's deal</div>
+        </div>
+      </div>
+    </a>
+
+    <!-- Yahtzee — centre elevated -->
+    <a class="phone lg" href="Yahtzee.html" style="text-decoration:none;">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="s-ytz">
+          <div class="s-y-hd">⚄ Yahtzee Mode</div>
+          <div class="s-y-dice">
+            <div class="s-y-die h">5</div>
+            <div class="s-y-die h">5</div>
+            <div class="s-y-die">3</div>
+            <div class="s-y-die h">5</div>
+            <div class="s-y-die">1</div>
+          </div>
+          <div style="font-size:8px;color:#9b8fff;margin-bottom:6px;font-weight:600;">3 held · Roll 2 of 3</div>
+          <div class="s-y-total">19</div>
+          <div class="s-y-lab">total</div>
+          <div class="s-y-btn">Roll Again</div>
+          <div class="s-y-sug">
+            <div class="s-y-sug-row"><span style="color:#ffcc00;font-weight:700;">Fives</span><span style="color:#ffcc00;">15 pts</span></div>
+            <div class="s-y-sug-row"><span>3 of a Kind</span><span>19 pts</span></div>
+            <div class="s-y-sug-row" style="border:none;"><span style="color:#ffcc00;font-weight:700;">YAHTZEE! 🎉</span><span style="color:#ffcc00;">50 pts</span></div>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- 500 -->
+    <a class="phone sm" href="500.html" style="text-decoration:none;">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="s-500">
+          <div class="s-5-hd">🂡 500 · Hand 4</div>
+          <div class="s-5-teams">
+            <div class="s-5-t"><div class="s-5-tn">Team A</div><div class="s-5-ts">180</div></div>
+            <div class="s-5-t" style="border-color:rgba(232,184,75,0.3);background:rgba(232,184,75,0.08);"><div class="s-5-tn">Team B</div><div class="s-5-ts" style="color:#e8b84b;">240</div></div>
+          </div>
+          <div class="s-5-bid">8 Hearts · 280 pts bid</div>
+          <div style="background:rgba(74,143,255,0.06);border:1px solid rgba(74,143,255,0.15);border-radius:5px;padding:5px 7px;">
+            <div style="font-size:7px;color:#6a6880;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;">Bid Table</div>
+            <div style="font-size:8px;color:#9896b0;display:flex;justify-content:space-between;">
+              <span style="color:#ff3d6b;">♥</span><span>6=100</span><span>7=200</span><span style="color:#e8b84b;font-weight:700;">8=280</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- WHY -->
+  <div class="why">
+    <div class="why-card">
+      <div class="why-icon">⚡</div>
+      <div class="why-title">Open & go</div>
+      <div class="why-body">Tap a link, add players, start scoring. Nothing to install, nothing to sign up for.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🧮</div>
+      <div class="why-title">Maths done for you</div>
+      <div class="why-body">Every tracker auto-calculates totals, bonuses and winners. No more counting on fingers.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">📤</div>
+      <div class="why-title">Pick up where you left off</div>
+      <div class="why-body">Export your game, share it, import it anywhere. Continue next week, no problem.</div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">📖</div>
+      <div class="why-title">Rules always handy</div>
+      <div class="why-body">Full rules and scoring reference built into every tracker. No more Googling mid-game.</div>
+    </div>
+  </div>
+
+  <!-- FAMILY GAMES -->
+  <div class="game-group">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Family & Casual 🎯</div>
+      <div class="sec-title">Family Game Night</div>
+    </div>
+    <div class="grid">
+      <a class="card c1" href="Phase10Tracker.html">
+        <div class="deco">10</div>
+        <div class="ct"><div class="ic i1">🃏</div><div class="cn n1">Phase 10</div></div>
+        <div class="tl">Track all 10 phases, scores and dealer rotation. Built-in card point calculator.</div>
+        <div class="pills"><span class="pill">Phase tracking</span><span class="pill">Dealer tracker</span><span class="pill">Calculator</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+      <a class="card c3" href="UNO.html">
+        <div class="deco">UNO</div>
+        <div class="ct"><div class="ic i3">🔴</div><div class="cn n3">UNO</div></div>
+        <div class="tl">Live race-to-500 progress bar, round scoring and full card point calculator.</div>
+        <div class="pills"><span class="pill">Race to 500</span><span class="pill">Live progress</span><span class="pill">Calculator</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+      <a class="card c8" href="SkipBo.html">
+        <div class="deco">SKIP</div>
+        <div class="ct"><div class="ic i8">⏭️</div><div class="cn n8">Skip-Bo</div></div>
+        <div class="tl">Track stock pile counts and scores. First player to empty their pile wins.</div>
+        <div class="pills"><span class="pill">Stock tracker</span><span class="pill">Round scoring</span><span class="pill">Leaderboard</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+      <a class="card c2" href="FiveCrowns.html">
+        <div class="deco">★</div>
+        <div class="ct"><div class="ic i2">👑</div><div class="cn n2">Five Crowns</div></div>
+        <div class="tl">Wild card changes every round. Live wild display, 11-round tracker and end-of-round scoring.</div>
+        <div class="pills"><span class="pill">Wild card display</span><span class="pill">11 rounds</span><span class="pill">Calculator</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- CLASSIC CARD GAMES -->
+  <div class="game-group">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Classic Card Games ♠️</div>
+      <div class="sec-title">The Classics</div>
+    </div>
+    <div class="grid">
+      <a class="card c5" href="500.html">
+        <div class="deco">500</div>
+        <div class="ct"><div class="ic i5">🂡</div><div class="cn n5">500</div></div>
+        <div class="tl">Australian 4-player 500 with full Avondale bid table, team scores, Misère and slam bonus.</div>
+        <div class="pills"><span class="pill">Avondale scoring</span><span class="pill">Bid table</span><span class="pill">Misère</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+      <a class="card c6" href="Cribbage.html">
+        <div class="deco">121</div>
+        <div class="ct"><div class="ic i6">🎯</div><div class="cn n6">Cribbage</div></div>
+        <div class="tl">Visual 121-hole pegging board with full hand scoring calculator for all combinations.</div>
+        <div class="pills"><span class="pill">Pegging board</span><span class="pill">Hand calculator</span><span class="pill">First to 121</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+      <a class="card c7" href="GinRummy.html">
+        <div class="deco">GIN</div>
+        <div class="ct"><div class="ic i7">🃟</div><div class="cn n7">Gin Rummy</div></div>
+        <div class="tl">Track knock and gin bonuses with deadwood calculator and running totals.</div>
+        <div class="pills"><span class="pill">Knock scoring</span><span class="pill">Gin bonus</span><span class="pill">Deadwood calc</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+      <a class="card c9" href="Hearts.html">
+        <div class="deco">♥</div>
+        <div class="ct"><div class="ic i9">♥️</div><div class="cn n9">Hearts</div></div>
+        <div class="tl">Avoid hearts and the Queen of Spades — or shoot the moon! Penalty tracking to 100.</div>
+        <div class="pills"><span class="pill">Penalty scoring</span><span class="pill">Shoot the moon</span><span class="pill">Race to 100</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- DICE GAMES -->
+  <div class="game-group">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Dice Games 🎲</div>
+      <div class="sec-title">Roll & Score</div>
+    </div>
+    <div class="grid">
+      <a class="card c4" href="Yahtzee.html">
+        <div class="deco">🎲</div>
+        <div class="ct"><div class="ic i4">⚄</div><div class="cn n4">Yahtzee</div></div>
+        <div class="tl">Full scorecard with built-in dice roller, hold mechanic, auto bonuses and score suggestions.</div>
+        <div class="pills"><span class="pill">Built-in dice</span><span class="pill">Auto bonuses</span><span class="pill">Score suggestions</span></div>
+        <div class="ob">Open tracker <span class="arr">→</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="game-group">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Game Night Tools 🛠️</div>
+      <div class="sec-title">Useful Extras</div>
+    </div>
+    <div class="grid">
+      <a class="card" href="Dice.html" style="border-color:rgba(155,143,255,0.12);text-decoration:none;color:inherit;" onmouseover="this.style.borderColor='rgba(155,143,255,0.35)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='rgba(155,143,255,0.12)';this.style.transform='none'">
+        <div class="deco" style="opacity:.05;">🎲</div>
+        <div class="ct">
+          <div class="ic" style="background:rgba(155,143,255,0.15);font-size:21px;">🎲</div>
+          <div class="cn" style="color:#9b8fff;">Dice Roller</div>
+        </div>
+        <div class="tl">d6 to d20, Yahtzee hold mode, random dealer picker. For when the real ones are under the couch.</div>
+        <div class="pills"><span class="pill">Standard roll</span><span class="pill">Yahtzee mode</span><span class="pill">Dealer picker</span></div>
+        <div class="ob" style="border-color:rgba(155,143,255,0.3);">Open roller <span class="arr">→</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- SCORE SHEET LIBRARY -->
+  <div class="library-cta">
+    <div style="position:relative;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px;">Can't find your game?</div>
+      <div style="font-family:var(--font-head);font-size:24px;margin-bottom:6px;">📋 Score Sheet Library</div>
+      <div style="font-size:13px;color:var(--muted2);line-height:1.6;max-width:460px;">50+ generic score sheets — Scrabble, Catan, Farkle, Golf, Darts, Pub Quiz and more. Quick scorecards for any game night situation.</div>
+    </div>
+    <a href="Scorecards.html" class="cta-btn">Browse 50+ sheets →</a>
+  </div>
+
+  <!-- ORIGIN STORY -->
+  <div class="origin">
+    <div class="origin-q">"</div>
+    <div class="origin-text">
+      We got sick of messy score sheets, pencils that went missing, and score-keeping apps full of ads and monthly subscriptions.
+      So we built something better — <strong>fast, free, and actually built for the table.</strong>
+      Every tracker has the rules built in, maths that does itself, and an export button so you can pick up next week right where you left off. No account. No nonsense. Just play.
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-logo">Wanna <span>Score?</span></div>
+    <div class="footer-sub">Free on web · No account · Works offline</div>
+    <div class="coming-pills">
+      <span class="cp">Canasta</span><span class="cp">Scrabble</span><span class="cp">Spades</span>
+      <span class="cp">Bridge</span><span class="cp">Euchre</span><span class="cp">Sequence</span>
+    </div>
+    <div class="footer-note">smitty412430.github.io/Game-Trackers</div>
+  </div>
+
+</div>
+</body>
+</html>
