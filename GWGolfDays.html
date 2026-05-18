@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G&W Golf Days ⛳</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Raleway:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a1a0a;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Raleway',sans-serif;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(20,80,20,0.4) 0%,transparent 60%),radial-gradient(ellipse at 50% 100%,rgba(180,140,0,0.15) 0%,transparent 60%);pointer-events:none}
+  #machine{max-width:540px;width:100%;margin:1rem auto;padding:0 1rem 2rem}
+  #cabinet{background:linear-gradient(180deg,#0d1f0d 0%,#071207 40%,#0d1f0d 100%);border-radius:24px;border:3px solid #8B7355;padding:1.5rem 1.25rem 1.5rem;position:relative;overflow:hidden}
+  #title-wrap{text-align:center;margin-bottom:1rem}
+  #title{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:#d4af37;letter-spacing:3px;text-shadow:0 0 20px rgba(212,175,55,0.5)}
+  #subtitle{font-family:'Raleway',sans-serif;font-size:10px;color:#8B7355;letter-spacing:5px;margin-top:3px;text-transform:uppercase}
+  #credits-bar{display:flex;justify-content:space-between;background:rgba(0,0,0,0.5);border:1px solid rgba(139,115,85,0.3);border-radius:10px;padding:8px 14px;margin-bottom:0.75rem}
+  .cred-group{text-align:center}
+  .cred-label{font-size:10px;color:#8B7355;letter-spacing:2px;text-transform:uppercase}
+  .cred-val{font-family:'Playfair Display',serif;font-size:22px;color:#d4af37;font-weight:700}
+  #win-msg{text-align:center;min-height:28px;font-family:'Playfair Display',serif;font-size:15px;color:#d4af37;margin-bottom:0.5rem;letter-spacing:1px;font-style:italic;transition:all 0.3s}
+  #reels-wrap{display:flex;gap:5px;background:rgba(0,0,0,0.7);border-radius:14px;padding:8px 6px;border:2px solid rgba(139,115,85,0.3);margin-bottom:0.75rem;position:relative}
+  #pl-top{position:absolute;top:calc(16.67% - 1px);left:0;right:0;height:2px;background:rgba(212,175,55,0.6);pointer-events:none;z-index:10;transition:opacity 0.3s}
+  #pl-mid{position:absolute;top:calc(50% - 1px);left:0;right:0;height:2px;background:rgba(212,175,55,0.9);pointer-events:none;z-index:10}
+  #pl-bot{position:absolute;top:calc(83.33% - 1px);left:0;right:0;height:2px;background:rgba(212,175,55,0.6);pointer-events:none;z-index:10;transition:opacity 0.3s}
+  .inactive{opacity:0.1}
+  .reel{flex:1;height:228px;overflow:hidden;border-radius:6px;background:#040d04;border:1px solid rgba(139,115,85,0.2);position:relative}
+  .strip{display:flex;flex-direction:column;will-change:transform}
+  .cell{height:76px;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+  .cell.wendy{background:rgba(212,175,55,0.07)}
+  .wendy-img{width:54px;height:54px;border-radius:50%;object-fit:cover;object-position:top;border:2.5px solid #d4af37;box-shadow:0 0 8px rgba(212,175,55,0.4)}
+  .photo-img{width:56px;height:44px;border-radius:6px;object-fit:cover;border:1.5px solid #8B7355}
+  .scatter-img{width:50px;height:50px;border-radius:6px;object-fit:cover;border:2px solid #ffd700;box-shadow:0 0 6px rgba(255,215,0,0.5)}
+  #line-selector{display:flex;gap:6px;margin-bottom:0.75rem;justify-content:center}
+  .line-btn{flex:1;padding:8px 4px;background:rgba(0,0,0,0.5);color:#8B7355;border:1px solid rgba(139,115,85,0.3);border-radius:8px;font-family:'Playfair Display',serif;font-size:15px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;text-align:center}
+  .line-btn.active{background:#2d4a1e;color:#d4af37;border-color:#d4af37;box-shadow:0 0 10px rgba(212,175,55,0.3)}
+  .line-btn:hover:not(.active){border-color:#d4af37;color:#d4af37}
+  #controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0.875rem}
+  .bet-row{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+  .bet-row label{font-size:11px;color:#8B7355;text-transform:uppercase;letter-spacing:1px;flex-shrink:0;font-weight:600}
+  .bet-row input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:rgba(139,115,85,0.25);border-radius:2px;outline:none}
+  .bet-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#d4af37;cursor:pointer}
+  .bet-row span{font-family:'Playfair Display',serif;font-size:18px;color:#d4af37;min-width:28px;text-align:right}
+  .cost-display{grid-column:1/-1;text-align:center;font-size:12px;color:#8B7355;font-weight:600;letter-spacing:1px}
+  .btn-small{padding:9px 8px;background:transparent;color:#8B7355;border:1px solid rgba(139,115,85,0.35);border-radius:8px;font-size:12px;cursor:pointer;font-family:'Raleway',sans-serif;font-weight:600;letter-spacing:1px;transition:all 0.15s}
+  .btn-small:hover{background:rgba(212,175,55,0.1);color:#d4af37;border-color:#d4af37}
+  #spin-btn{grid-column:1/-1;padding:15px;background:linear-gradient(135deg,#2d4a1e,#3d6428);color:#d4af37;border:2px solid #d4af37;border-radius:10px;font-family:'Playfair Display',serif;font-size:20px;font-weight:700;cursor:pointer;letter-spacing:2px;transition:transform 0.1s,background 0.15s}
+  #spin-btn:hover{background:linear-gradient(135deg,#3d6428,#4d7a32)}
+  #spin-btn:active{transform:scale(0.97)}
+  #spin-btn:disabled{background:#1a2a1a;color:#445544;border-color:#445544;cursor:not-allowed}
+  #paytable{background:rgba(0,0,0,0.4);border-radius:10px;padding:10px 14px;border:1px solid rgba(139,115,85,0.2)}
+  #paytable h3{font-family:'Raleway',sans-serif;font-size:9px;color:#d4af37;letter-spacing:3px;margin-bottom:6px;text-transform:uppercase;font-weight:700}
+  .pay-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+  .pay-sym{font-size:12px;color:#8B7355}
+  .pay-amt{font-family:'Playfair Display',serif;font-size:13px;color:#d4af37}
+  #free-spins-banner{display:none;text-align:center;background:rgba(45,74,30,0.4);border:2px solid #d4af37;border-radius:10px;padding:8px;margin-bottom:0.75rem;font-family:'Playfair Display',serif;font-size:16px;color:#d4af37;letter-spacing:2px;font-style:italic;animation:fsblink 0.8s ease-in-out infinite alternate}
+  @keyframes fsblink{from{opacity:1}to{opacity:0.6}}
+  #free-spins-banner.show{display:block}
+  #jackpot-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:200;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1rem}
+  #jackpot-overlay.show{display:flex}
+  #jk-img{width:140px;height:140px;border-radius:50%;object-fit:cover;object-position:top;border:4px solid #d4af37;margin-bottom:1rem;animation:jk-pulse 0.6s ease-in-out infinite alternate}
+  @keyframes jk-pulse{from{box-shadow:0 0 20px rgba(212,175,55,0.4)}to{box-shadow:0 0 80px rgba(212,175,55,0.9),0 0 160px rgba(212,175,55,0.3)}}
+  #jk-title{font-family:'Playfair Display',serif;font-size:52px;font-weight:900;color:#d4af37;text-shadow:0 0 30px rgba(212,175,55,0.8);margin-bottom:0.25rem;animation:jk-blink 0.4s ease-in-out infinite alternate;letter-spacing:3px}
+  @keyframes jk-blink{from{opacity:1}to{opacity:0.7}}
+  #jk-sub{font-family:'Raleway',sans-serif;font-size:18px;color:#fff;margin-bottom:0.5rem;letter-spacing:2px}
+  #jk-amount{font-family:'Playfair Display',serif;font-size:38px;color:#d4af37;margin-bottom:1.5rem;letter-spacing:2px}
+  #jk-close{padding:14px 36px;background:#2d4a1e;color:#d4af37;border:2px solid #d4af37;border-radius:8px;font-family:'Playfair Display',serif;font-size:18px;font-weight:700;cursor:pointer;letter-spacing:2px}
+  #fs-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.93);z-index:150;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+  #fs-overlay.show{display:flex}
+  #fs-title{font-family:'Playfair Display',serif;font-size:48px;color:#d4af37;letter-spacing:3px;text-shadow:0 0 30px rgba(212,175,55,0.8);margin-bottom:0.5rem;animation:jk-blink 0.4s ease-in-out infinite alternate}
+  #fs-sub{font-size:18px;color:#fff;margin-bottom:1.5rem;font-family:'Raleway',sans-serif;letter-spacing:1px;line-height:1.6}
+  #fs-go{padding:14px 36px;background:#2d4a1e;color:#d4af37;border:2px solid #d4af37;border-radius:8px;font-family:'Playfair Display',serif;font-size:20px;font-weight:700;cursor:pointer;letter-spacing:2px}
+  .confetti{position:fixed;z-index:300;pointer-events:none;animation:cffall linear forwards}
+  @keyframes cffall{0%{transform:translateY(-30px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+  .win-glow{animation:winglow 0.4s ease-in-out 3}
+  @keyframes winglow{0%,100%{background:rgba(0,0,0,0.7)}50%{background:rgba(45,74,30,0.2)}}
+</style>
+</head>
+<body>
+<div id="machine">
+  <div id="cabinet">
+    <div id="title-wrap">
+      <div id="title">⛳ G&W Golf Days ⛳</div>
+      <div id="subtitle">★ In Loving Memory of Wendy ★</div>
+    </div>
+    <div id="credits-bar">
+      <div class="cred-group"><div class="cred-label">Credits</div><div class="cred-val" id="cval">200</div></div>
+      <div class="cred-group"><div class="cred-label">Lines</div><div class="cred-val" id="lines-val">1</div></div>
+      <div class="cred-group"><div class="cred-label">Bet/Line</div><div class="cred-val" id="bval">5</div></div>
+      <div class="cred-group"><div class="cred-label">Win</div><div class="cred-val" id="wval">0</div></div>
+    </div>
+    <div id="win-msg">Select your lines and swing away! ⛳</div>
+    <div id="free-spins-banner"></div>
+    <div id="reels-wrap">
+      <div id="pl-top" class="inactive"></div>
+      <div id="pl-mid"></div>
+      <div id="pl-bot" class="inactive"></div>
+      <div class="reel"><div class="strip" id="s0"></div></div>
+      <div class="reel"><div class="strip" id="s1"></div></div>
+      <div class="reel"><div class="strip" id="s2"></div></div>
+      <div class="reel"><div class="strip" id="s3"></div></div>
+      <div class="reel"><div class="strip" id="s4"></div></div>
+    </div>
+    <div id="line-selector">
+      <button class="line-btn active" data-lines="1">1 Line</button>
+      <button class="line-btn" data-lines="3">3 Lines</button>
+      <button class="line-btn" data-lines="5">5 Lines</button>
+    </div>
+    <div id="controls">
+      <div class="bet-row">
+        <label>Bet</label>
+        <input type="range" id="bet-slider" min="1" max="20" value="5" step="1">
+        <span id="bet-disp">5</span>
+      </div>
+      <div class="cost-display" id="cost-display">TOTAL COST: 5 CREDITS PER SPIN</div>
+      <button class="btn-small" id="max-btn">Max Bet</button>
+      <button class="btn-small" id="add-btn">+ 200 Credits</button>
+      <button id="spin-btn">SWING ⛳</button>
+    </div>
+    <div id="paytable">
+      <h3>Paytable — multiplier × bet per line</h3>
+      <div class="pay-row"><span class="pay-sym">💛 Wendy × 5</span><span class="pay-amt">JACKPOT × 500</span></div>
+      <div class="pay-row"><span class="pay-sym">💛 Wendy × 4</span><span class="pay-amt">× 100</span></div>
+      <div class="pay-row"><span class="pay-sym">💛 Wendy × 3</span><span class="pay-amt">× 25</span></div>
+      <div class="pay-row"><span class="pay-sym">🏆 Memorial Trophy × 5</span><span class="pay-amt">× 50</span></div>
+      <div class="pay-row"><span class="pay-sym">👨‍👦 Family × 5</span><span class="pay-amt">× 30</span></div>
+      <div class="pay-row"><span class="pay-sym">📋 Honours Board × 5</span><span class="pay-amt">× 20</span></div>
+      <div class="pay-row"><span class="pay-sym">⛳ × 5</span><span class="pay-amt">× 15</span></div>
+      <div class="pay-row"><span class="pay-sym">🏌️ × 5</span><span class="pay-amt">× 10</span></div>
+      <div class="pay-row"><span class="pay-sym">🏆 × 5</span><span class="pay-amt">× 8</span></div>
+      <div class="pay-row"><span class="pay-sym">🌿 × 5</span><span class="pay-amt">× 5</span></div>
+      <div class="pay-row"><span class="pay-sym">🏅 Trophy × 4 anywhere</span><span class="pay-amt">10 FREE SPINS!</span></div>
+      <div class="pay-row"><span class="pay-sym">Any 3+ matching</span><span class="pay-amt">× 2</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="fs-overlay">
+  <div id="fs-title">🏆 FREE SWINGS! 🏆</div>
+  <div id="fs-sub">4 TROPHIES — 10 FREE SWINGS AWARDED!<br>All wins doubled during free swings!</div>
+  <button id="fs-go">Tee It Up! ⛳</button>
+</div>
+
+<div id="jackpot-overlay">
+  <img id="jk-img" src="data:image/jpeg;base64,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" alt="Wendy">
+  <div id="jk-title">JACKPOT!</div>
+  <div id="jk-sub">FOR WENDY — ALWAYS IN OUR HEARTS 💛</div>
+  <div id="jk-amount"></div>
+  <button id="jk-close">Collect with Love 💛</button>
+</div>
+
+<script>
+const WENDY_PHOTO    = "data:image/jpeg;base64,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";
+const MEMORIAL_PHOTO = "data:image/jpeg;base64,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";
+const FAMILY_PHOTO   = "data:image/jpeg;base64,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";
+const HONOURS_PHOTO  = "data:image/jpeg;base64,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";
+// Trophy photo placeholder - same as memorial until updated
+const TROPHY_PHOTO   = "data:image/jpeg;base64,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";
+
+const SYMS    = ['⛳','🏌️','🏆','🌿','HONOURS','FAMILY','TROPHY','MEMORIAL','WENDY'];
+const WEIGHTS = [  18,  15,  14,  16,        9,       9,      10,        9,      4 ];
+const CELL_H  = 76;
+const NREELS  = 5;
+
+const PAYLINES = [
+  [1,1,1,1,1],
+  [0,0,0,0,0],
+  [2,2,2,2,2],
+  [0,1,2,1,0],
+  [2,1,0,1,2],
+];
+
+const PHOTO_MAP = {
+  'WENDY':    [WENDY_PHOTO,    'wendy-img'],
+  'MEMORIAL': [MEMORIAL_PHOTO, 'photo-img'],
+  'FAMILY':   [FAMILY_PHOTO,   'photo-img'],
+  'HONOURS':  [HONOURS_PHOTO,  'photo-img'],
+  'TROPHY':   [TROPHY_PHOTO,   'scatter-img'],
+};
+
+let credits=200, bet=5, activeLines=1, spinning=false;
+let freeSpinsRemaining=0, inFreeSpins=false;
+let freeSpinsMusicPlaying=false, freeSpinsLoopTimer=null;
+let reelResults=[];
+
+function wRand(){
+  const tot=WEIGHTS.reduce((a,b)=>a+b,0);
+  let r=Math.random()*tot;
+  for(let i=0;i<SYMS.length;i++){r-=WEIGHTS[i];if(r<=0)return SYMS[i];}
+  return SYMS[0];
+}
+
+function makeCell(sym){
+  const d=document.createElement('div');
+  d.className='cell'+(sym==='WENDY'?' wendy':'');
+  if(PHOTO_MAP[sym]){
+    const img=document.createElement('img');
+    img.src=PHOTO_MAP[sym][0]; img.className=PHOTO_MAP[sym][1];
+    d.appendChild(img);
+  } else { d.textContent=sym; }
+  return d;
+}
+
+function buildStrip(el,topSym,midSym,botSym){
+  el.innerHTML='';
+  const n=26, syms=[];
+  for(let i=0;i<n-5;i++) syms.push(wRand());
+  syms.push(wRand(),topSym,midSym,botSym,wRand());
+  syms.forEach(s=>el.appendChild(makeCell(s)));
+}
+
+function initReels(){
+  for(let i=0;i<NREELS;i++){
+    const s=document.getElementById('s'+i);
+    s.innerHTML='';
+    for(let j=0;j<6;j++) s.appendChild(makeCell(wRand()));
+  }
+}
+
+function countScatters(results){
+  let count=0;
+  results.forEach(reel=>reel.forEach(sym=>{if(sym==='TROPHY')count++;}));
+  return count;
+}
+
+function calcLineWin(lineSym,multiplier){
+  const c={};
+  lineSym.forEach(s=>{c[s]=(c[s]||0)+1;});
+  const wc=c['WENDY']||0;
+  if(wc===5) return {mult:500*multiplier,jackpot:true, msg:'💛 WENDY × 5 — JACKPOT! WITH LOVE ALWAYS!'};
+  if(wc===4) return {mult:100*multiplier,jackpot:false,msg:'💛 WENDY × 4 — Beautiful!'};
+  if(wc===3) return {mult:25*multiplier, jackpot:false,msg:'💛 WENDY × 3 — Always remembered!'};
+  if((c['TROPHY']||0)>=5)   return {mult:50*multiplier, jackpot:false,msg:'🏆 WENDY MEMORIAL TROPHY × 5!'};
+  if((c['FAMILY']||0)>=5)   return {mult:30*multiplier, jackpot:false,msg:'👨‍👦 FAMILY × 5 — Three generations!'};
+  if((c['HONOURS']||0)>=5)  return {mult:20*multiplier, jackpot:false,msg:'📋 HONOURS BOARD × 5 — G. Schmidt!'};
+  if((c['MEMORIAL']||0)>=5) return {mult:15*multiplier, jackpot:false,msg:'🖼️ MEMORIAL × 5!'};
+  if((c['⛳']||0)>=5)        return {mult:15*multiplier, jackpot:false,msg:'⛳ HOLE IN ONE × 5!'};
+  if((c['🏌️']||0)>=5)       return {mult:10*multiplier, jackpot:false,msg:'🏌️ GOLFER × 5 — Nice swing Gerry!'};
+  if((c['🏆']||0)>=5)        return {mult:8*multiplier,  jackpot:false,msg:'🏆 TROPHIES × 5 — Champion!'};
+  if((c['🌿']||0)>=5)        return {mult:5*multiplier,  jackpot:false,msg:'🌿 FAIRWAY × 5 — Green in regulation!'};
+  for(const s of Object.keys(c)){
+    if(c[s]>=3&&s!=='TROPHY') return {mult:2*multiplier,jackpot:false,msg:`${s} × ${c[s]} — Small win!`};
+  }
+  return {mult:0,jackpot:false,msg:null};
+}
+
+function updatePaylineVisuals(){
+  document.getElementById('pl-top').className=activeLines>=3?'':'inactive';
+  document.getElementById('pl-bot').className=activeLines>=3?'':'inactive';
+}
+
+function updateCostDisplay(){
+  document.getElementById('lines-val').textContent=activeLines;
+  document.getElementById('bval').textContent=bet;
+  const cost=inFreeSpins?0:bet*activeLines;
+  document.getElementById('cost-display').textContent=inFreeSpins
+    ?`FREE SWINGS REMAINING: ${freeSpinsRemaining}`
+    :`TOTAL COST: ${cost} CREDITS PER SPIN`;
+}
+
+function updateFreeSpinsBanner(){
+  const banner=document.getElementById('free-spins-banner');
+  if(inFreeSpins&&freeSpinsRemaining>0){
+    banner.textContent=`🏆 FREE SWINGS: ${freeSpinsRemaining} REMAINING — ALL WINS DOUBLED! ⛳`;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ── AUDIO ──────────────────────────────────────────────
+let audioCtx=null;
+function getCtx(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playTone(freq,type,vol,start,duration){
+  try{
+    const ctx=getCtx(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.frequency.value=freq;o.type=type;
+    g.gain.setValueAtTime(vol,ctx.currentTime+start);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+start+duration);
+    o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+duration+0.05);
+  }catch(e){}
+}
+function playSmallWin(){ [330,415,494].forEach((f,i)=>playTone(f,'sine',0.06,i*0.12,0.28)); }
+function playBigWin(){ [330,415,494,659,784,988].forEach((f,i)=>playTone(f,'sine',0.07,i*0.13,0.35)); }
+function playJackpot(){
+  const notes=[330,415,494,659,494,659,740,659,880,740,659,494];
+  notes.forEach((f,i)=>playTone(f,'sine',0.07,i*0.14,0.38));
+}
+function playFreeSpinsTrigger(){
+  try{
+    const ctx=getCtx(),t=ctx.currentTime;
+    [0,0.4,0.8].forEach(offset=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=220;
+      g.gain.setValueAtTime(0.15,t+offset);
+      g.gain.exponentialRampToValueAtTime(0.001,t+offset+0.35);
+      o.start(t+offset);o.stop(t+offset+0.4);
+    });
+    // gentle rising sweep
+    const sweep=ctx.createOscillator(),sg=ctx.createGain();
+    sweep.connect(sg);sg.connect(ctx.destination);
+    sweep.type='sine';
+    sweep.frequency.setValueAtTime(220,t+1.3);
+    sweep.frequency.exponentialRampToValueAtTime(880,t+2.1);
+    sg.gain.setValueAtTime(0.07,t+1.3);
+    sg.gain.exponentialRampToValueAtTime(0.001,t+2.2);
+    sweep.start(t+1.3);sweep.stop(t+2.3);
+  }catch(e){}
+}
+function startFreeSpinsMusic(){
+  if(freeSpinsMusicPlaying) return;
+  freeSpinsMusicPlaying=true;
+  playFreeSpinsLoop();
+}
+function playFreeSpinsLoop(){
+  if(!freeSpinsMusicPlaying) return;
+  try{
+    const ctx=getCtx(),t=ctx.currentTime;
+    // Gentle golf-club lounge jazz riff
+    const riff=[
+      [330,0.0,0.3],[415,0.4,0.3],[494,0.8,0.3],[440,1.2,0.3],
+      [392,1.6,0.3],[440,2.0,0.3],[494,2.4,0.5],
+      [330,3.0,0.3],[370,3.4,0.3],[415,3.8,0.3],[494,4.2,0.5],
+    ];
+    const loopLen=4.8;
+    riff.forEach(([freq,start,dur])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.value=freq;
+      g.gain.setValueAtTime(0.05,t+start);
+      g.gain.exponentialRampToValueAtTime(0.001,t+start+dur+0.05);
+      o.start(t+start);o.stop(t+start+dur+0.1);
+    });
+    // soft bass walk
+    [165,0,196,1.2,220,2.4,196,3.6].reduce((acc,v,i,arr)=>{
+      if(i%2===0){const freq=v,start=arr[i+1];playTone(freq,'sine',0.04,start,0.35);}
+      return acc;
+    },null);
+    freeSpinsLoopTimer=setTimeout(()=>{if(freeSpinsMusicPlaying)playFreeSpinsLoop();},loopLen*1000-50);
+  }catch(e){}
+}
+function stopFreeSpinsMusic(){
+  freeSpinsMusicPlaying=false;
+  if(freeSpinsLoopTimer){clearTimeout(freeSpinsLoopTimer);freeSpinsLoopTimer=null;}
+}
+function playFreeSpinsEnd(){
+  [494,440,415,330,220].forEach((f,i)=>playTone(f,'sine',0.07,i*0.18,0.28));
+}
+
+function doSpin(){
+  spinning=true;
+  const multiplier=inFreeSpins?2:1;
+  if(!inFreeSpins){ credits-=bet*activeLines; }
+  else{ freeSpinsRemaining--; updateFreeSpinsBanner(); }
+  updateUI();
+  document.getElementById('wval').textContent='0';
+  document.getElementById('spin-btn').disabled=true;
+  document.getElementById('win-msg').textContent=inFreeSpins?'🏆 Free Swing! ⛳':'Teeing off... ⛳';
+
+  reelResults=Array.from({length:NREELS},()=>[wRand(),wRand(),wRand()]);
+  const strips=Array.from({length:NREELS},(_,i)=>document.getElementById('s'+i));
+  const n=26;
+  strips.forEach((s,i)=>{
+    buildStrip(s,reelResults[i][0],reelResults[i][1],reelResults[i][2]);
+    s.style.transition='none';s.style.transform='translateY(0)';
+  });
+
+  const delays=[0,200,400,600,800],dur=inFreeSpins?1400:2000;
+  strips.forEach((s,i)=>{
+    setTimeout(()=>{
+      const target=-((n-4)*CELL_H);
+      s.style.transition=`transform ${dur-delays[i]}ms cubic-bezier(0.2,0.5,0.3,1)`;
+      s.style.transform=`translateY(${target}px)`;
+    },80+delays[i]);
+  });
+
+  setTimeout(()=>{
+    const scatterCount=countScatters(reelResults);
+    let totalWin=0,jackpot=false;
+    const winMsgs=[];
+    for(let l=0;l<activeLines;l++){
+      const line=PAYLINES[l];
+      const lineSym=reelResults.map((reel,ri)=>reel[line[ri]]);
+      const result=calcLineWin(lineSym,multiplier);
+      if(result.mult>0){
+        totalWin+=result.mult*bet;
+        if(result.jackpot) jackpot=true;
+        if(result.msg) winMsgs.push(result.msg);
+      }
+    }
+    credits+=totalWin; updateUI();
+    document.getElementById('wval').textContent=totalWin;
+
+    if(scatterCount>=4&&!inFreeSpins){
+      document.getElementById('win-msg').textContent='🏆 4 TROPHIES — FREE SWINGS TRIGGERED! ⛳';
+      playFreeSpinsTrigger();
+      setTimeout(()=>{
+        freeSpinsRemaining=10;inFreeSpins=true;
+        document.getElementById('fs-overlay').classList.add('show');
+        updateFreeSpinsBanner();updateCostDisplay();
+      },700);
+    } else if(jackpot){
+      document.getElementById('win-msg').textContent='💛 JACKPOT! FOR WENDY! 💛';
+      setTimeout(()=>{
+        document.getElementById('jk-amount').textContent=`+${totalWin} CREDITS`;
+        document.getElementById('jackpot-overlay').classList.add('show');
+        confetti(100);playJackpot();
+      },400);
+    } else if(totalWin>0){
+      const prefix=inFreeSpins?'🏆 FREE WIN! ':'';
+      document.getElementById('win-msg').textContent=prefix+(winMsgs.length>1?`MULTI-LINE WIN! +${totalWin}!`:winMsgs[0]);
+      if(totalWin>=bet*activeLines*10){playBigWin();}else{playSmallWin();}
+      document.getElementById('reels-wrap').classList.add('win-glow');
+      setTimeout(()=>document.getElementById('reels-wrap').classList.remove('win-glow'),1400);
+    } else {
+      document.getElementById('win-msg').textContent=inFreeSpins&&freeSpinsRemaining>0
+        ?`No win — ${freeSpinsRemaining} free swings left! ⛳`
+        :'No win — keep swinging! ⛳';
+    }
+    spinning=false;
+    document.getElementById('spin-btn').disabled=false;
+    updateCostDisplay();
+  },delays[NREELS-1]+dur+150);
+}
+
+function autoSpinFreeSpins(){
+  if(!inFreeSpins||freeSpinsRemaining<=0){
+    inFreeSpins=false;
+    stopFreeSpinsMusic();playFreeSpinsEnd();
+    updateFreeSpinsBanner();updateCostDisplay();
+    document.getElementById('win-msg').textContent='Free Swings over! Great round! ⛳';
+    document.getElementById('spin-btn').disabled=false;
+    return;
+  }
+  document.getElementById('spin-btn').disabled=true;
+  doSpin();
+  const spinWait=1400+800+300;
+  setTimeout(()=>{
+    if(inFreeSpins&&freeSpinsRemaining>0){autoSpinFreeSpins();}
+    else{
+      inFreeSpins=false;
+      stopFreeSpinsMusic();playFreeSpinsEnd();
+      updateFreeSpinsBanner();updateCostDisplay();
+      document.getElementById('spin-btn').disabled=false;
+    }
+  },spinWait);
+}
+
+function spin(){
+  if(spinning) return;
+  if(!inFreeSpins&&credits<bet*activeLines){
+    document.getElementById('win-msg').textContent='Not enough credits — add some more!';return;
+  }
+  doSpin();
+}
+
+function updateUI(){
+  document.getElementById('cval').textContent=credits;
+  updateCostDisplay();
+}
+
+function confetti(n){
+  const cols=['#d4af37','#2d4a1e','#ffffff','#90EE90','#ffd700','#228B22'];
+  for(let i=0;i<n;i++){
+    const el=document.createElement('div');
+    el.className='confetti';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-20px;width:${6+Math.random()*10}px;height:${6+Math.random()*10}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*1.5}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),4500);
+  }
+}
+
+document.querySelectorAll('.line-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.line-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeLines=parseInt(btn.dataset.lines);
+    updatePaylineVisuals();updateCostDisplay();
+  });
+});
+document.getElementById('bet-slider').addEventListener('input',function(){
+  bet=parseInt(this.value);
+  document.getElementById('bet-disp').textContent=bet;
+  updateCostDisplay();
+});
+document.getElementById('max-btn').addEventListener('click',()=>{
+  bet=20;document.getElementById('bet-slider').value=20;
+  document.getElementById('bet-disp').textContent=20;updateCostDisplay();
+});
+document.getElementById('add-btn').addEventListener('click',()=>{credits+=200;updateUI();});
+document.getElementById('spin-btn').addEventListener('click',spin);
+document.getElementById('jk-close').addEventListener('click',()=>{
+  document.getElementById('jackpot-overlay').classList.remove('show');
+});
+document.getElementById('fs-go').addEventListener('click',()=>{
+  document.getElementById('fs-overlay').classList.remove('show');
+  startFreeSpinsMusic();
+  autoSpinFreeSpins();
+});
+
+initReels();updatePaylineVisuals();updateUI();
+</script>
+</body>
+</html>
