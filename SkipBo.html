@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skip-Bo Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060d0a;--surface:#0c1510;--surface2:#121e16;--surface3:#18271c;--surface4:#1e3022;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e8f5ec;--muted:#5a8a6a;
+  --lime:#7ecf4a;--lime2:#a8e870;--lime-dim:rgba(126,207,74,0.12);
+  --orange:#ff8c3a;--orange-dim:rgba(255,140,58,0.12);
+  --blue:#4ab8ff;--blue-dim:rgba(74,184,255,0.12);
+  --red:#e05555;--red-dim:rgba(224,85,85,0.12);
+  --skip:#ffd04a;
+  --radius:14px;--font-head:'Fredoka',sans-serif;--font:'Nunito',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 10% 0%,rgba(126,207,74,0.08) 0%,transparent 50%),radial-gradient(ellipse at 90% 100%,rgba(255,140,58,0.06) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 20px 80px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.logo-title{font-family:var(--font-head);font-size:44px;letter-spacing:1px;line-height:1;color:var(--lime2);}
+.logo-title span{color:var(--skip);}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+.nav{display:flex;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:40px;padding:5px;flex-wrap:wrap;}
+.nav button{font-family:var(--font);font-size:12px;font-weight:700;padding:8px 16px;border:none;border-radius:30px;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);text-transform:uppercase;}
+.nav button.active{background:var(--surface4);color:var(--lime2);}
+.nav button:hover:not(.active){color:var(--text);}
+.panel{display:none;}.panel.active{display:block;}
+.btn{font-family:var(--font);font-size:12px;font-weight:800;padding:10px 20px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;text-transform:uppercase;letter-spacing:.5px;}
+.btn-lime{background:var(--lime);color:#061008;}.btn-lime:hover{filter:brightness(1.1);}
+.btn-orange{background:var(--orange-dim);color:var(--orange);border:1px solid rgba(255,140,58,.3);}.btn-orange:hover{background:rgba(255,140,58,.2);}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(224,85,85,.3);}.btn-red:hover{background:rgba(224,85,85,.2);}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}.btn-muted:hover{background:var(--surface4);}
+.btn-sm{font-size:11px;padding:6px 14px;}
+.text-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;outline:none;border-radius:8px;padding:9px 14px;}
+.text-input:focus{border-color:var(--lime);}
+.text-input::placeholder{color:var(--muted);}
+
+/* Players grid */
+.players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
+.player-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;text-align:center;}
+.pc-rank{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px;}
+.pc-name{font-family:var(--font-head);font-size:20px;margin-bottom:8px;}
+.pc-score{font-family:var(--font-head);font-size:48px;line-height:1;color:var(--lime2);margin-bottom:4px;}
+.pc-wins{font-size:12px;color:var(--muted);font-weight:600;}
+
+/* Round entry */
+.round-entry{background:var(--surface);border:1px solid rgba(126,207,74,.2);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
+.re-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px;color:var(--lime2);margin-bottom:4px;}
+.re-sub{font-size:12px;color:var(--muted);margin-bottom:16px;font-weight:600;}
+.re-section{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;margin-top:14px;}
+.winner-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.winner-btn{font-family:var(--font);font-size:12px;font-weight:700;padding:8px 16px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;}
+.winner-btn.selected{border-color:var(--lime);color:var(--lime);background:var(--lime-dim);}
+.winner-btn:hover:not(.selected){color:var(--text);}
+.stock-rows{display:flex;flex-direction:column;gap:8px;}
+.stock-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;}
+.sr-name{flex:1;font-weight:700;font-size:13px;}
+.sr-won-badge{font-size:10px;font-weight:800;background:var(--lime-dim);color:var(--lime);border:1px solid rgba(126,207,74,.3);padding:2px 8px;border-radius:10px;text-transform:uppercase;}
+.sr-input{width:64px;height:32px;background:var(--surface3);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--font-head);font-size:16px;text-align:center;outline:none;}
+.sr-input:focus{border-color:var(--lime);}
+.sr-pts{font-size:12px;color:var(--muted);font-weight:600;}
+
+/* History */
+.hist-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;}
+.hist-title{font-family:var(--font-head);font-size:16px;color:var(--lime2);margin-bottom:12px;}
+.hist-table{width:100%;border-collapse:collapse;font-size:12px;}
+.hist-table th{text-align:left;padding:5px 8px;border-bottom:1px solid var(--border2);color:var(--muted);font-size:9px;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;}
+.hist-table td{padding:7px 8px;border-bottom:1px solid var(--border);}
+.hist-table tr:last-child td{border-bottom:none;}
+
+/* Rules */
+.section-title{font-family:var(--font-head);font-size:26px;letter-spacing:.5px;margin-bottom:6px;}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:20px;font-weight:600;}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.rule-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.rule-icon{font-size:22px;margin-bottom:8px;}
+.rule-title{font-family:var(--font-head);font-size:15px;color:var(--lime2);margin-bottom:6px;}
+.rule-body{font-size:12px;color:var(--muted);line-height:1.7;font-weight:600;}
+.rule-body strong{color:var(--text);}
+.rule-body ul{padding-left:14px;margin-top:4px;}
+.rule-body li{margin-bottom:3px;}
+.gh-empty{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
+.gh-list{display:flex;flex-direction:column;gap:12px;}
+.gh-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;}
+.gh-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.gh-title{font-family:var(--font-head);font-size:15px;color:var(--lime2);}
+.gh-date{font-size:11px;color:var(--muted);}
+.win-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100;display:none;align-items:center;justify-content:center;}
+.win-overlay.show{display:flex;}
+.win-modal{background:var(--surface);border:1px solid rgba(126,207,74,.4);border-radius:22px;padding:40px 50px;text-align:center;max-width:400px;}
+.win-icon{font-size:52px;margin-bottom:10px;}
+.win-title{font-family:var(--font-head);font-size:40px;color:var(--lime2);margin-bottom:4px;}
+.win-player{font-family:var(--font-head);font-size:24px;margin-bottom:4px;}
+.win-info{font-size:13px;color:var(--muted);margin-bottom:24px;font-weight:600;}
+.win-actions{display:flex;gap:10px;justify-content:center;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:none;align-items:center;justify-content:center;}
+.modal-backdrop.show{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;padding:26px 30px;width:360px;max-width:92vw;}
+.modal h3{font-family:var(--font-head);font-size:20px;color:var(--lime2);margin-bottom:10px;}
+.modal-body{font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;}
+.modal-preview{background:var(--surface2);border-radius:10px;padding:12px;margin-top:10px;font-size:12px;color:var(--muted);line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo-title"><span>Skip</span>-Bo</div>
+      <div class="logo-sub">Score Tracker · First to 500</div>
+    </div>
+    <nav class="nav">
+      <button class="active" onclick="showPanel('game',this)">Game</button>
+      <button onclick="showPanel('rules',this)">Rules</button>
+      <button onclick="showPanel('history',this)">History</button>
+    </nav>
+  </header>
+
+  <div class="panel active" id="panel-game">
+    <div id="setup-section">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;">
+        <div style="font-family:var(--font-head);font-size:20px;color:var(--lime2);margin-bottom:4px;">New Game</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;font-weight:600;">Add 2–6 players. First to 500 pts wins. Winner of each round scores 25pts + 5pts per card in opponents' stock piles.</div>
+        <div id="player-inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-muted btn-sm" onclick="addPlayerInput()">+ Add Player</button>
+        </div>
+        <button class="btn btn-lime" onclick="startGame()">Start Game →</button>
+      </div>
+    </div>
+
+    <div id="game-section" style="display:none;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
+        <div><div style="font-family:var(--font-head);font-size:22px;color:var(--lime2);" id="round-num">1</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:800;">Round</div></div>
+        <div style="width:1px;height:28px;background:var(--border2);"></div>
+        <div><div style="font-family:var(--font-head);font-size:16px;" id="leader-name">—</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:800;">Leading</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-muted btn-sm" onclick="undoLast()" id="undo-btn" disabled>↩ Undo</button>
+          <button class="btn btn-muted btn-sm" onclick="exportGame()">⬇ Export</button>
+          <button class="btn btn-muted btn-sm" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none" onchange="importGame(event)">
+          <button class="btn btn-red btn-sm" onclick="confirmNewGame()">New Game</button>
+        </div>
+      </div>
+
+      <div class="players-grid" id="players-grid"></div>
+
+      <div class="round-entry">
+        <div class="re-title" id="re-title">Round 1 Scores</div>
+        <div class="re-sub">Select the winner (empty stock pile), then enter remaining stock pile card counts for all other players.</div>
+        <div class="re-section">Round Winner</div>
+        <div class="winner-btns" id="winner-btns"></div>
+        <div class="re-section">Stock Pile Cards Remaining</div>
+        <div class="stock-rows" id="stock-rows"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;">
+          <button class="btn btn-lime" onclick="submitRound()">Submit Round →</button>
+          <span id="round-preview" style="font-size:12px;color:var(--muted);font-weight:700;"></span>
+        </div>
+      </div>
+
+      <div class="hist-wrap" id="hist-wrap" style="display:none;">
+        <div class="hist-title">Round History</div>
+        <table class="hist-table"><thead id="hist-head"></thead><tbody id="hist-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-rules">
+    <div class="section-title">How to Play</div>
+    <div class="section-sub">Skip-Bo — be the first to empty your stock pile. Rack up 500 points across rounds.</div>
+    <div class="rules-grid" id="rules-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div><div class="section-title" style="margin-bottom:0;">Game History</div></div>
+      <button class="btn btn-red btn-sm" onclick="clearHistory()">Clear All</button>
+    </div>
+    <div id="gh-container"></div>
+  </div>
+</div>
+
+<div class="win-overlay" id="win-overlay">
+  <div class="win-modal">
+    <div class="win-icon">🃏</div>
+    <div class="win-title">500!</div>
+    <div class="win-player" id="win-name"></div>
+    <div class="win-info" id="win-info"></div>
+    <div class="win-actions">
+      <button class="btn btn-muted" onclick="closeWin()">View Scores</button>
+      <button class="btn btn-lime" onclick="saveAndNew()">Save & New Game</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-newgame">
+  <div class="modal"><h3>New Game?</h3><div class="modal-body">Save to history?</div>
+    <div class="modal-actions"><button class="btn btn-muted btn-sm" onclick="closeModal('modal-newgame')">Cancel</button><button class="btn btn-muted btn-sm" onclick="discardNew()">Discard</button><button class="btn btn-lime btn-sm" onclick="saveAndNew()">Save & Reset</button></div>
+  </div>
+</div>
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal"><h3>Import Game?</h3><div class="modal-body">Replace current game?</div>
+    <div id="import-preview" class="modal-preview"></div>
+    <div class="modal-actions"><button class="btn btn-muted btn-sm" onclick="closeModal('modal-import')">Cancel</button><button class="btn btn-lime btn-sm" onclick="confirmImport()">Load</button></div>
+  </div>
+</div>
+
+<script>
+const RULES=[
+  {icon:'🎯',title:'Objective',body:'Be the first player to empty your <strong>Stock Pile</strong> — the face-down pile of cards dealt to you at the start. The winner of each round scores points, and the first to reach <strong>500 points</strong> wins the game.'},
+  {icon:'🃏',title:'Setup',body:'Deal <strong>30 cards</strong> (2–4 players) or 20 cards (5–6 players) face-down to each player as their Stock Pile. Flip the top card face-up. Deal 5 cards to each player\'s hand. Remaining cards form the Draw Pile.'},
+  {icon:'🔄',title:'Your Turn',body:'<ul><li>Draw cards until you have 5 in hand</li><li>Play cards from your hand, Stock Pile (top only), or Discard Piles onto Building Piles in the centre (1 through 12 in sequence)</li><li>Skip-Bo cards are wild — they count as any number 1–12</li><li>If you can\'t play, discard one card to end your turn</li></ul>'},
+  {icon:'🃟',title:'Building Piles',body:'Up to 4 Building Piles in the centre. Each must start with a 1 or Skip-Bo card and builds up to 12. When a pile reaches 12, remove it — a new pile can be started in its place.'},
+  {icon:'📦',title:'Discard Piles',body:'Each player has up to 4 personal Discard Piles. You can play in any order and pile any number of cards. You can only play the <strong>top card</strong> of a Discard Pile.'},
+  {icon:'🏆',title:'Winning a Round',body:'First player to play their last Stock Pile card wins the round. If playing multiple rounds, the winner scores: <strong>25 points + 5 points per card</strong> remaining in each other player\'s Stock Pile.'},
+  {icon:'🎲',title:'Winning the Game',body:'Keep playing rounds until a player reaches <strong>500 points</strong>. That player wins the game overall.'},
+  {icon:'💡',title:'Strategy',body:'Always play from your Stock Pile first if possible — that\'s how you win. Manage Discard Piles carefully to set up future turns. Save Skip-Bo cards for critical moments.'},
+];
+const PLAYER_COLORS=['var(--lime2)','var(--orange)','var(--blue)','#ff6b9d','var(--skip)','#c084fc'];
+
+let state={started:false,players:[],scores:[],wins:[],round:1,selectedWinner:0,rounds:[]};
+let gameHistory=[];
+let lastBackup=null;
+let pendingImport=null;
+let playerInputCount=2;
+
+function save(){try{localStorage.setItem('skipbo_v1',JSON.stringify(state));}catch(e){}}
+function savehist(){try{localStorage.setItem('skipbo_hist',JSON.stringify(gameHistory));}catch(e){}}
+function load(){
+  try{const d=localStorage.getItem('skipbo_v1');if(d)state=JSON.parse(d);}catch(e){}
+  try{const d=localStorage.getItem('skipbo_hist');if(d)gameHistory=JSON.parse(d);}catch(e){}
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showPanel(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='history')renderHistory();
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+function initPlayerInputs(){
+  const container=document.getElementById('player-inputs');
+  container.innerHTML='';
+  for(let i=0;i<playerInputCount;i++) addPlayerInputEl(container,i);
+}
+function addPlayerInput(){
+  if(playerInputCount>=6)return;
+  playerInputCount++;
+  const container=document.getElementById('player-inputs');
+  addPlayerInputEl(container,playerInputCount-1);
+}
+function addPlayerInputEl(container,i){
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:10px;';
+  div.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${PLAYER_COLORS[i]};flex-shrink:0;"></div>
+    <input class="text-input" id="pi-${i}" placeholder="Player ${i+1} name" style="flex:1;">`;
+  container.appendChild(div);
+}
+
+function startGame(){
+  const players=[];
+  for(let i=0;i<playerInputCount;i++){
+    const inp=document.getElementById('pi-'+i);
+    const name=(inp?.value||'').trim()||'Player '+(i+1);
+    players.push(name);
+  }
+  state={started:true,players,scores:players.map(()=>0),wins:players.map(()=>0),round:1,selectedWinner:0,rounds:[]};
+  try{save();}catch(e){}
+  renderGame();
+}
+
+function selectWinner(idx){
+  state.selectedWinner=idx;
+  document.querySelectorAll('.winner-btn').forEach((b,i)=>{
+    b.className='winner-btn'+(i===idx?' selected':'');
+  });
+  updatePreview();
+}
+
+function updatePreview(){
+  let pts=25;
+  state.players.forEach((_,i)=>{
+    if(i===state.selectedWinner)return;
+    const inp=document.getElementById('sc-'+i);
+    pts+=(parseInt(inp?.value)||0)*5;
+  });
+  document.getElementById('round-preview').textContent='+'+pts+' pts to '+state.players[state.selectedWinner];
+}
+
+function submitRound(){
+  const w=state.selectedWinner;
+  let pts=25;
+  const stockCards=state.players.map((_,i)=>{
+    if(i===w)return 0;
+    const v=parseInt(document.getElementById('sc-'+i)?.value)||0;
+    pts+=v*5;
+    return v;
+  });
+  lastBackup={scores:[...state.scores],wins:[...state.wins],rounds:[...state.rounds],round:state.round};
+  state.scores[w]+=pts;
+  state.wins[w]++;
+  state.rounds.push({round:state.round,winner:state.players[w],pts,stockCards,scores:[...state.scores]});
+  state.round++;
+  document.getElementById('undo-btn').disabled=false;
+  try{save();}catch(e){}
+  renderGame();
+  if(state.scores[w]>=500) triggerWin(w);
+}
+
+function undoLast(){
+  if(!lastBackup)return;
+  state.scores=lastBackup.scores;state.wins=lastBackup.wins;state.rounds=lastBackup.rounds;state.round=lastBackup.round;
+  lastBackup=null;document.getElementById('undo-btn').disabled=true;
+  try{save();}catch(e){}renderGame();
+}
+
+function renderGame(){
+  if(!state.started){document.getElementById('setup-section').style.display='';document.getElementById('game-section').style.display='none';initPlayerInputs();return;}
+  document.getElementById('setup-section').style.display='none';document.getElementById('game-section').style.display='';
+  document.getElementById('round-num').textContent=state.round;
+  document.getElementById('re-title').textContent='Round '+state.round+' Scores';
+  const sorted=[...state.players].map((p,i)=>({name:p,score:state.scores[i],i})).sort((a,b)=>b.score-a.score);
+  document.getElementById('leader-name').textContent=sorted[0]?.name.split(' ')[0]||'—';
+
+  document.getElementById('players-grid').innerHTML=sorted.map((p,rank)=>`
+    <div class="player-card">
+      <div class="pc-rank">${rank===0?'🏆 Leader':rank===1?'2nd':rank===2?'3rd':(rank+1)+'th'}</div>
+      <div class="pc-name" style="color:${PLAYER_COLORS[p.i]}">${esc(p.name)}</div>
+      <div class="pc-score">${p.score}</div>
+      <div class="pc-wins">${state.wins[p.i]} round${state.wins[p.i]===1?'':'s'} won · ${500-p.score} to win</div>
+    </div>`).join('');
+
+  document.getElementById('winner-btns').innerHTML=state.players.map((name,i)=>
+    `<button class="winner-btn${state.selectedWinner===i?' selected':''}" onclick="selectWinner(${i})" style="color:${PLAYER_COLORS[i]};border-color:${state.selectedWinner===i?PLAYER_COLORS[i]:'rgba(255,255,255,0.12)'}">${esc(name)}</button>`
+  ).join('');
+
+  document.getElementById('stock-rows').innerHTML=state.players.map((name,i)=>{
+    const isWinner=i===state.selectedWinner;
+    return `<div class="stock-row">
+      <div class="sr-name" style="color:${PLAYER_COLORS[i]}">${esc(name)}</div>
+      ${isWinner?'<div class="sr-won-badge">Winner — 0 cards</div>':''}
+      ${!isWinner?`<div class="sr-pts">Cards left:</div><input class="sr-input" id="sc-${i}" type="number" min="0" value="0" oninput="updatePreview()">`:''} 
+    </div>`;
+  }).join('');
+
+  // History
+  const wrap=document.getElementById('hist-wrap');
+  if(!state.rounds.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  document.getElementById('hist-head').innerHTML=`<tr><th>Round</th><th>Winner</th><th>Points</th>${state.players.map(p=>`<th>${esc(p)}</th>`).join('')}</tr>`;
+  document.getElementById('hist-body').innerHTML=[...state.rounds].reverse().map(r=>`
+    <tr>
+      <td style="color:var(--muted)">R${r.round}</td>
+      <td style="font-weight:700;color:var(--lime2)">${esc(r.winner)}</td>
+      <td style="font-family:var(--font-head);font-size:15px;color:var(--lime2)">+${r.pts}</td>
+      ${r.scores.map(s=>`<td style="font-family:var(--font-head);font-size:14px;">${s}</td>`).join('')}
+    </tr>`).join('');
+}
+
+function triggerWin(wi){
+  document.getElementById('win-name').textContent=state.players[wi];
+  document.getElementById('win-info').textContent='Final score: '+state.scores[wi]+' pts · '+state.wins[wi]+' rounds won';
+  document.getElementById('win-overlay').classList.add('show');
+}
+function closeWin(){document.getElementById('win-overlay').classList.remove('show');}
+function confirmNewGame(){closeWin();document.getElementById('modal-newgame').classList.add('show');}
+function discardNew(){closeModal('modal-newgame');resetGame();}
+function saveAndNew(){
+  closeWin();
+  if(state.started&&state.rounds.length){
+    const wi=state.scores.indexOf(Math.max(...state.scores));
+    gameHistory.unshift({date:new Date().toLocaleString(),rounds:state.round-1,players:state.players,scores:state.scores,winner:state.players[wi]});
+    if(gameHistory.length>20)gameHistory.pop();savehist();
+  }
+  closeModal('modal-newgame');resetGame();
+}
+function resetGame(){
+  state={started:false,players:[],scores:[],wins:[],round:1,selectedWinner:0,rounds:[]};
+  playerInputCount=2;lastBackup=null;document.getElementById('undo-btn')&&(document.getElementById('undo-btn').disabled=true);
+  try{save();}catch(e){}renderGame();
+}
+function renderHistory(){
+  const c=document.getElementById('gh-container');
+  if(!gameHistory.length){c.innerHTML='<div class="gh-empty">No saved games yet.</div>';return;}
+  c.innerHTML='<div class="gh-list">'+gameHistory.map((g,gi)=>`
+    <div class="gh-item">
+      <div class="gh-header"><div class="gh-title">Game ${gameHistory.length-gi} — ${g.rounds} rounds</div><div class="gh-date">${g.date}</div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;">
+        ${g.players.map((p,i)=>`<div style="display:flex;align-items:center;gap:6px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:${PLAYER_COLORS[i]}"></div>
+          <span style="font-weight:700;font-size:13px;">${esc(p)}</span>
+          <span style="font-family:var(--font-head);font-size:17px;color:${PLAYER_COLORS[i]};">${g.scores[i]}</span>
+          ${g.winner===p?'<span style="font-size:10px;font-weight:800;color:var(--lime);background:var(--lime-dim);border:1px solid rgba(126,207,74,.3);padding:2px 8px;border-radius:10px;">Winner</span>':''}
+        </div>`).join('')}
+      </div>
+    </div>`).join('')+'</div>';
+}
+function clearHistory(){gameHistory=[];savehist();renderHistory();}
+function exportGame(){
+  const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),state,gameHistory},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=`SkipBo_${new Date().toLocaleDateString('en-AU').replace(/\//g,'-')}.json`;a.click();URL.revokeObjectURL(url);
+}
+function importGame(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{const data=JSON.parse(ev.target.result);if(!data.state)throw new Error();pendingImport=data;
+      const s=data.state;
+      document.getElementById('import-preview').innerHTML=`<strong style="color:var(--text)">${new Date(data.exportedAt).toLocaleString()}</strong><br>Round ${s.round}, ${s.players?.length||0} players`;
+      document.getElementById('modal-import').classList.add('show');
+    }catch(err){alert('Could not read file.');}e.target.value='';
+  };reader.readAsText(file);
+}
+function confirmImport(){
+  if(!pendingImport)return;state=pendingImport.state;if(pendingImport.gameHistory)gameHistory=pendingImport.gameHistory;
+  lastBackup=null;try{save();savehist();}catch(e){}closeModal('modal-import');renderGame();pendingImport=null;
+}
+function renderRules(){document.getElementById('rules-grid').innerHTML=RULES.map(r=>`<div class="rule-card"><div class="rule-icon">${r.icon}</div><div class="rule-title">${r.title}</div><div class="rule-body">${r.body}</div></div>`).join('');}
+load();renderGame();renderRules();
+</script>
+</body>
+</html>

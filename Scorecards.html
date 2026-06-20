@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score Sheet Library — Game Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08080d;--surface:#0f0f16;--surface2:#16161f;--surface3:#1d1d28;--surface4:#252535;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f0effe;--muted:#6e6c88;--muted2:#9896b0;
+  --accent:#9b8fff;--green:#3db87a;--red:#e05555;--gold:#f0b429;
+  --font-head:'Abril Fatface',serif;--font:'DM Sans',sans-serif;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;touch-action:manipulation;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 10%,rgba(155,143,255,0.07) 0%,transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(61,184,122,0.05) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 80px;}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border2);margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:color .15s;}
+.back-btn:hover{color:var(--text);}
+.logo-title{font-family:var(--font-head);font-size:32px;color:var(--text);}
+.logo-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+
+/* Library view */
+.library{display:block;}
+.library-header{margin-bottom:20px;}
+.library-title{font-family:var(--font-head);font-size:28px;margin-bottom:4px;}
+.library-sub{font-size:13px;color:var(--muted);font-weight:500;}
+.search-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;font-weight:500;outline:none;border-radius:40px;padding:12px 20px;transition:border-color .15s;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--muted);}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.filter-btn{font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s;text-transform:uppercase;letter-spacing:.5px;}
+.filter-btn:hover{color:var(--text);}
+.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.game-count{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:12px;}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.game-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.game-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;background:radial-gradient(ellipse at 0% 0%,rgba(155,143,255,0.08) 0%,transparent 60%);}
+.game-card:hover{transform:translateY(-2px);border-color:rgba(155,143,255,0.3);box-shadow:0 8px 28px rgba(0,0,0,.4);}
+.game-card:hover::before{opacity:1;}
+.game-card.premium{border-color:rgba(240,180,41,0.2);}
+.game-card.premium::before{background:radial-gradient(ellipse at 0% 0%,rgba(240,180,41,0.08) 0%,transparent 60%);}
+.game-card.premium:hover{border-color:rgba(240,180,41,0.4);}
+.gc-icon{font-size:24px;margin-bottom:8px;}
+.gc-name{font-weight:700;font-size:13px;color:var(--text);margin-bottom:2px;}
+.gc-cat{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.gc-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;}
+.gc-badge.generic{background:rgba(155,143,255,0.1);color:var(--accent);border:1px solid rgba(155,143,255,0.2);}
+.gc-badge.premium{background:rgba(240,180,41,0.1);color:var(--gold);border:1px solid rgba(240,180,41,0.25);}
+.gc-players{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* Scorecard view */
+.scorecard-view{display:none;}
+.sc-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+.sc-back{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;padding:8px 16px;border-radius:40px;border:1px solid rgba(155,143,255,0.3);background:rgba(155,143,255,0.08);transition:all .15s;}
+.sc-back:hover{background:rgba(155,143,255,0.15);}
+.sc-title-wrap{flex:1;}
+.sc-game-icon{font-size:28px;margin-bottom:2px;}
+.sc-game-name{font-family:var(--font-head);font-size:24px;color:var(--text);}
+.sc-game-sub{font-size:12px;color:var(--muted);font-weight:500;}
+.sc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;}
+
+/* Player setup */
+.player-setup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;}
+.ps-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:12px;}
+.ps-players{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.ps-player-row{display:flex;align-items:center;gap:8px;}
+.ps-input{flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:14px;font-weight:600;outline:none;border-radius:8px;padding:8px 12px;transition:border-color .15s;}
+.ps-input:focus{border-color:var(--accent);}
+.ps-input::placeholder{color:var(--muted);}
+.ps-remove{width:28px;height:28px;border-radius:7px;border:1px solid var(--border2);background:var(--surface3);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.ps-remove:hover{color:var(--red);}
+.ps-add{font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;border:1px solid rgba(155,143,255,0.3);background:rgba(155,143,255,0.08);color:var(--accent);cursor:pointer;transition:all .15s;text-transform:uppercase;}
+.ps-add:hover{background:rgba(155,143,255,0.15);}
+
+/* Score table */
+.score-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+.score-table{width:100%;border-collapse:collapse;}
+.score-table th{padding:10px 12px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border2);text-align:center;}
+.score-table th:first-child{text-align:left;min-width:80px;}
+.score-table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;}
+.score-table td:first-child{text-align:left;font-size:12px;font-weight:600;color:var(--muted);padding-left:12px;}
+.score-table tr:last-child td{border-bottom:none;}
+.score-table tr.total-row td{background:var(--surface2);font-weight:700;}
+.score-table tr.total-row td:first-child{color:var(--text);}
+.score-input{width:60px;height:32px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--font-head);font-size:15px;text-align:center;outline:none;transition:border-color .15s;}
+.score-input:focus{border-color:var(--accent);}
+.total-cell{font-family:var(--font-head);font-size:18px;color:var(--accent);}
+.total-cell.winning{color:var(--green);}
+.total-cell.lowest{color:var(--green);}
+
+/* Win banner */
+.win-banner{background:rgba(61,184,122,0.1);border:1px solid rgba(61,184,122,0.3);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;text-align:center;display:none;}
+.win-banner.show{display:block;}
+.win-banner-title{font-family:var(--font-head);font-size:22px;color:var(--green);margin-bottom:4px;}
+.win-banner-sub{font-size:13px;color:var(--muted);font-weight:500;}
+
+/* Buttons */
+.btn{font-family:var(--font);font-size:12px;font-weight:700;padding:10px 20px;border-radius:40px;border:none;cursor:pointer;transition:all .18s;text-transform:uppercase;letter-spacing:.3px;}
+.btn-accent{background:var(--accent);color:#fff;}.btn-accent:hover{filter:brightness(1.1);}
+.btn-green{background:rgba(61,184,122,0.12);color:var(--green);border:1px solid rgba(61,184,122,0.3);}.btn-green:hover{background:rgba(61,184,122,0.2);}
+.btn-red{background:rgba(224,85,85,0.1);color:var(--red);border:1px solid rgba(224,85,85,0.25);}.btn-red:hover{background:rgba(224,85,85,0.18);}
+.btn-muted{background:var(--surface3);color:var(--text);border:1px solid var(--border2);}.btn-muted:hover{background:var(--surface4);}
+.btn-sm{font-size:11px;padding:6px 14px;}
+
+.empty-search{text-align:center;color:var(--muted);padding:48px;font-size:13px;font-weight:500;}
+
+@media(max-width:500px){.games-grid{grid-template-columns:1fr 1fr;}.score-input{width:48px;font-size:13px;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back-btn" href="index.html">← Back to Games</a>
+    <div>
+      <div class="logo-title">📋 Score Sheets</div>
+      <div class="logo-sub">50+ games · Generic library</div>
+    </div>
+  </header>
+
+  <!-- LIBRARY VIEW -->
+  <div class="library" id="library-view">
+    <div class="library-header">
+      <div class="library-title">Score Sheet Library</div>
+      <div class="library-sub">Can't find your game in our premium trackers? Pick any game below for a quick scorecard.</div>
+    </div>
+
+    <div class="search-bar">
+      <input class="search-input" id="search-input" placeholder="Search games..." oninput="filterGames()">
+    </div>
+
+    <div class="filter-row" id="filter-row"></div>
+    <div class="game-count" id="game-count"></div>
+    <div class="games-grid" id="games-grid"></div>
+  </div>
+
+  <!-- SCORECARD VIEW -->
+  <div class="scorecard-view" id="scorecard-view">
+    <div class="sc-header">
+      <div class="sc-back" onclick="backToLibrary()">← Library</div>
+      <div class="sc-title-wrap">
+        <div class="sc-game-icon" id="sc-icon"></div>
+        <div class="sc-game-name" id="sc-name"></div>
+        <div class="sc-game-sub" id="sc-sub"></div>
+      </div>
+      <div class="sc-actions">
+        <button class="btn btn-muted btn-sm" onclick="exportScore()">⬇ Export</button>
+        <button class="btn btn-red btn-sm" onclick="resetScore()">Reset</button>
+      </div>
+    </div>
+
+    <!-- Win banner -->
+    <div class="win-banner" id="win-banner">
+      <div style="font-size:32px;margin-bottom:6px;">🏆</div>
+      <div class="win-banner-title" id="win-name"></div>
+      <div class="win-banner-sub" id="win-sub"></div>
+    </div>
+
+    <!-- Player setup -->
+    <div class="player-setup">
+      <div class="ps-title">Players</div>
+      <div class="ps-players" id="ps-players"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="ps-add" onclick="addPlayer()">+ Add Player</button>
+        <button class="btn btn-green btn-sm" onclick="startScoring()" id="start-btn">Start Scoring →</button>
+        <span style="font-size:11px;color:var(--muted);" id="scoring-status"></span>
+      </div>
+    </div>
+
+    <!-- Score table -->
+    <div class="score-table-wrap" id="score-table-wrap" style="display:none;">
+      <table class="score-table" id="score-table"></table>
+    </div>
+
+    <!-- Add round -->
+    <div id="add-round-section" style="display:none;margin-bottom:16px;">
+      <button class="btn btn-accent" onclick="addRound()" id="add-round-btn">+ Add Round</button>
+      <span style="font-size:12px;color:var(--muted);margin-left:10px;" id="round-info"></span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── GAME LIBRARY ──────────────────────────────────────────────────────────────
+const GAMES=[
+  // Card Games
+  {id:'rummy500',name:'Rummy 500',icon:'🃏',cat:'Card Games',players:'2-6',lowWins:false,target:500,desc:'First to 500 points wins'},
+  {id:'canasta',name:'Canasta',icon:'🃏',cat:'Card Games',players:'2-6',lowWins:false,target:5000,desc:'First team to 5000 points wins'},
+  {id:'spades',name:'Spades',icon:'♠️',cat:'Card Games',players:'4',lowWins:false,target:500,desc:'First team to 500 points wins'},
+  {id:'bridge',name:'Bridge',icon:'🂡',cat:'Card Games',players:'4',lowWins:false,target:null,desc:'Track rubber bridge scores'},
+  {id:'euchre',name:'Euchre',icon:'🃏',cat:'Card Games',players:'4',lowWins:false,target:10,desc:'First team to 10 points wins'},
+  {id:'whist',name:'Whist',icon:'🃏',cat:'Card Games',players:'4',lowWins:false,target:null,desc:'Track trick scores by round'},
+  {id:'snap',name:'Snap',icon:'🃏',cat:'Card Games',players:'2-6',lowWins:false,target:null,desc:'Count cards won per round'},
+  {id:'solitaire',name:'Patience Score',icon:'🃟',cat:'Card Games',players:'1-4',lowWins:false,target:null,desc:'Track patience game scores'},
+  {id:'blackjack',name:'Blackjack',icon:'🂾',cat:'Card Games',players:'2-8',lowWins:false,target:null,desc:'Track chip counts per player'},
+  {id:'poker',name:'Poker',icon:'🂺',cat:'Card Games',players:'2-9',lowWins:false,target:null,desc:'Track chip counts across rounds'},
+  {id:'oldmaid',name:'Old Maid',icon:'👴',cat:'Card Games',players:'2-6',lowWins:false,target:null,desc:'Track penalty points per round'},
+  {id:'warcard',name:'War',icon:'⚔️',cat:'Card Games',players:'2',lowWins:false,target:null,desc:'Track cards won per round'},
+  {id:'gofish',name:'Go Fish',icon:'🐟',cat:'Card Games',players:'2-6',lowWins:false,target:null,desc:'Track sets collected per player'},
+  {id:'crazyeights',name:'Crazy Eights',icon:'8️⃣',cat:'Card Games',players:'2-5',lowWins:true,target:100,desc:'Avoid reaching 100 penalty points'},
+  {id:'setback',name:'Setback',icon:'🃏',cat:'Card Games',players:'4',lowWins:false,target:21,desc:'First team to 21 points wins'},
+  {id:'pinochle',name:'Pinochle',icon:'🃏',cat:'Card Games',players:'4',lowWins:false,target:1500,desc:'First team to 1500 points wins'},
+
+  // Dice Games
+  {id:'farkle',name:'Farkle',icon:'🎲',cat:'Dice Games',players:'2-8',lowWins:false,target:10000,desc:'First to 10,000 points wins'},
+  {id:'bunco',name:'Bunco',icon:'🎲',cat:'Dice Games',players:'12',lowWins:false,target:null,desc:'Track wins and losses across 6 rounds'},
+  {id:'leftright',name:'Left Right Centre',icon:'🎲',cat:'Dice Games',players:'3-8',lowWins:false,target:null,desc:'Last player with chips wins'},
+  {id:'tenthousand',name:'10,000',icon:'🎲',cat:'Dice Games',players:'2-8',lowWins:false,target:10000,desc:'First to 10,000 points wins'},
+  {id:'balut',name:'Balut',icon:'🎲',cat:'Dice Games',players:'2-6',lowWins:false,target:null,desc:'5 rounds of 7 categories each'},
+  {id:'mexicali',name:'Mexico',icon:'🎲',cat:'Dice Games',players:'2-8',lowWins:true,target:null,desc:'Lowest score each round loses a life'},
+  {id:'thirtyone',name:'Thirty-One',icon:'🃏',cat:'Dice Games',players:'3-9',lowWins:true,target:null,desc:'Track lives remaining per player'},
+
+  // Board Games
+  {id:'scrabble',name:'Scrabble',icon:'🔤',cat:'Board Games',players:'2-4',lowWins:false,target:null,desc:'Track word scores per turn'},
+  {id:'catan',name:'Catan',icon:'🏝️',cat:'Board Games',players:'3-4',lowWins:false,target:10,desc:'First to 10 victory points wins'},
+  {id:'monopoly',name:'Monopoly',icon:'🎩',cat:'Board Games',players:'2-8',lowWins:false,target:null,desc:'Track cash and assets per player'},
+  {id:'risk',name:'Risk',icon:'🌍',cat:'Board Games',players:'2-6',lowWins:false,target:null,desc:'Track territories and armies'},
+  {id:'ticket',name:'Ticket to Ride',icon:'🚂',cat:'Board Games',players:'2-5',lowWins:false,target:null,desc:'Track points — routes and destinations'},
+  {id:'pandemic',name:'Pandemic',icon:'🦠',cat:'Board Games',players:'2-4',lowWins:false,target:null,desc:'Cooperative — track outbreaks and cures'},
+  {id:'codenames',name:'Codenames',icon:'🕵️',cat:'Board Games',players:'4+',lowWins:false,target:null,desc:'Track rounds won per team'},
+  {id:'clue',name:'Cluedo / Clue',icon:'🔍',cat:'Board Games',players:'3-6',lowWins:false,target:null,desc:'Track elimination rounds'},
+  {id:'battleship',name:'Battleship',icon:'🚢',cat:'Board Games',players:'2',lowWins:false,target:null,desc:'Track hits and ships sunk'},
+  {id:'chess',name:'Chess',icon:'♟️',cat:'Board Games',players:'2',lowWins:false,target:null,desc:'Track match wins across sessions'},
+  {id:'checkers',name:'Checkers',icon:'⚫',cat:'Board Games',players:'2',lowWins:false,target:null,desc:'Track pieces taken per game'},
+  {id:'backgammon',name:'Backgammon',icon:'🎯',cat:'Board Games',players:'2',lowWins:false,target:null,desc:'Track match points — first to target wins'},
+  {id:'ludo',name:'Ludo',icon:'🎠',cat:'Board Games',players:'2-4',lowWins:false,target:null,desc:'Track pieces home per player'},
+  {id:'snakes',name:'Snakes & Ladders',icon:'🐍',cat:'Board Games',players:'2-6',lowWins:false,target:null,desc:'Track rounds won per player'},
+  {id:'boggle',name:'Boggle',icon:'🔡',cat:'Board Games',players:'2-8',lowWins:false,target:null,desc:'Track word scores per round'},
+  {id:'pictionary',name:'Pictionary',icon:'🎨',cat:'Board Games',players:'4+',lowWins:false,target:null,desc:'Track rounds won per team'},
+  {id:'trivpursuit',name:'Trivial Pursuit',icon:'🧠',cat:'Board Games',players:'2-6',lowWins:false,target:null,desc:'Track wedges and correct answers'},
+
+  // Party Games
+  {id:'taboo',name:'Taboo',icon:'🚫',cat:'Party Games',players:'4+',lowWins:false,target:null,desc:'Track points per round per team'},
+  {id:'charades',name:'Charades',icon:'🎭',cat:'Party Games',players:'4+',lowWins:false,target:null,desc:'Track correct guesses per team'},
+  {id:'bowls',name:'Lawn Bowls',icon:'🎳',cat:'Party Games',players:'2-8',lowWins:false,target:21,desc:'First to 21 points wins'},
+  {id:'darts',name:'Darts',icon:'🎯',cat:'Party Games',players:'2-4',lowWins:true,target:0,desc:'Count down from 501 — first to zero wins'},
+  {id:'pool',name:'Pool / Billiards',icon:'🎱',cat:'Party Games',players:'2-4',lowWins:false,target:null,desc:'Track frames won per player'},
+  {id:'tabletennis',name:'Table Tennis',icon:'🏓',cat:'Party Games',players:'2-4',lowWins:false,target:11,desc:'First to 11 (win by 2) per set'},
+  {id:'badminton',name:'Badminton',icon:'🏸',cat:'Party Games',players:'2-4',lowWins:false,target:21,desc:'First to 21 per game'},
+  {id:'cornhole',name:'Cornhole',icon:'🌽',cat:'Party Games',players:'2-4',lowWins:false,target:21,desc:'First team to 21 wins'},
+  {id:'bingo',name:'Bingo',icon:'🎱',cat:'Party Games',players:'2-20',lowWins:false,target:null,desc:'Track bingo wins per player'},
+  {id:'sequence',name:'Sequence',icon:'🎴',cat:'Board Games',players:'2-12',lowWins:false,target:null,desc:'Track sequences made per team'},
+
+  // Pub & Trivia
+  {id:'pubquiz',name:'Pub Quiz',icon:'🍺',cat:'Trivia & Pub',players:'2-10',lowWins:false,target:null,desc:'Track scores per round per team'},
+  {id:'trivia',name:'General Trivia',icon:'🧠',cat:'Trivia & Pub',players:'2-8',lowWins:false,target:null,desc:'Track correct answers per round'},
+  {id:'twentyq',name:'20 Questions',icon:'❓',cat:'Trivia & Pub',players:'2-8',lowWins:false,target:null,desc:'Track correct guesses per player'},
+
+  // Sports & Other
+  {id:'golf',name:'Golf',icon:'⛳',cat:'Sports',players:'1-8',lowWins:true,target:null,desc:'Track strokes per hole — lowest score wins'},
+  {id:'bowling',name:'Ten Pin Bowling',icon:'🎳',cat:'Sports',players:'1-6',lowWins:false,target:300,desc:'Track scores across 10 frames'},
+  {id:'cricket',name:'Cricket (card game)',icon:'🏏',cat:'Card Games',players:'2-6',lowWins:false,target:null,desc:'Track runs scored per round'},
+];
+
+const CATEGORIES=['All',...[...new Set(GAMES.map(g=>g.cat))]];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentGame=null;
+let players=['Player 1','Player 2'];
+let rounds=[]; // array of {scores:[...]} per round
+let scoringStarted=false;
+let activeFilter='All';
+
+// ── LIBRARY ───────────────────────────────────────────────────────────────────
+function renderLibrary(){
+  // Filters
+  document.getElementById('filter-row').innerHTML=CATEGORIES.map(c=>`
+    <button class="filter-btn${activeFilter===c?' active':''}" onclick="setFilter('${c}',this)">${c}</button>`).join('');
+
+  filterGames();
+}
+
+function setFilter(cat,btn){
+  activeFilter=cat;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterGames();
+}
+
+function filterGames(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
+  const filtered=GAMES.filter(g=>{
+    const matchCat=activeFilter==='All'||g.cat===activeFilter;
+    const matchQ=!q||g.name.toLowerCase().includes(q)||g.cat.toLowerCase().includes(q);
+    return matchCat&&matchQ;
+  });
+  document.getElementById('game-count').textContent=`${filtered.length} game${filtered.length!==1?'s':''} found`;
+  const grid=document.getElementById('games-grid');
+  if(!filtered.length){
+    grid.innerHTML='<div class="empty-search" style="grid-column:1/-1;">No games found for "'+q+'".<br>Try a different search!</div>';
+    return;
+  }
+  grid.innerHTML=filtered.map(g=>`
+    <div class="game-card" onclick="openGame('${g.id}')">
+      <div class="gc-icon">${g.icon}</div>
+      <div class="gc-name">${esc(g.name)}</div>
+      <div class="gc-cat">${g.cat}</div>
+      <span class="gc-badge generic">Score Sheet</span>
+      <div class="gc-players">👥 ${g.players} players</div>
+    </div>`).join('');
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── GAME ──────────────────────────────────────────────────────────────────────
+function openGame(id){
+  currentGame=GAMES.find(g=>g.id===id);
+  if(!currentGame)return;
+  players=['Player 1','Player 2'];
+  rounds=[];
+  scoringStarted=false;
+
+  document.getElementById('library-view').style.display='none';
+  document.getElementById('scorecard-view').style.display='block';
+
+  document.getElementById('sc-icon').textContent=currentGame.icon;
+  document.getElementById('sc-name').textContent=currentGame.name;
+  document.getElementById('sc-sub').textContent=currentGame.desc+(currentGame.target?` — target: ${currentGame.target} pts`:'')+(currentGame.lowWins?' — lowest score wins':'');
+
+  document.getElementById('win-banner').classList.remove('show');
+  document.getElementById('score-table-wrap').style.display='none';
+  document.getElementById('add-round-section').style.display='none';
+  document.getElementById('scoring-status').textContent='';
+
+  renderPlayerSetup();
+  renderScoreTable();
+}
+
+function backToLibrary(){
+  document.getElementById('library-view').style.display='block';
+  document.getElementById('scorecard-view').style.display='none';
+  currentGame=null;
+}
+
+// ── PLAYERS ───────────────────────────────────────────────────────────────────
+function renderPlayerSetup(){
+  document.getElementById('ps-players').innerHTML=players.map((p,i)=>`
+    <div class="ps-player-row">
+      <input class="ps-input" value="${esc(p)}" placeholder="Player ${i+1}"
+        oninput="players[${i}]=this.value;renderScoreTable();"
+        style="border-color:${playerColor(i,0.3)};">
+      ${players.length>2&&!scoringStarted?`<button class="ps-remove" onclick="removePlayer(${i})">✕</button>`:''}
+    </div>`).join('');
+  document.getElementById('start-btn').style.display=scoringStarted?'none':'';
+  document.getElementById('scoring-status').textContent=scoringStarted?`Round ${rounds.length} — add scores then click + Add Round`:'';
+}
+
+function addPlayer(){
+  if(players.length>=8)return;
+  players.push('Player '+(players.length+1));
+  renderPlayerSetup();renderScoreTable();
+}
+function removePlayer(i){
+  if(players.length<=2)return;
+  players.splice(i,1);
+  renderPlayerSetup();renderScoreTable();
+}
+function playerColor(i,a=1){
+  const cols=['155,143,255','61,184,122','240,100,100','74,143,255','240,180,41','94,231,200','255,120,80','220,100,180'];
+  return `rgba(${cols[i%cols.length]},${a})`;
+}
+
+// ── SCORING ───────────────────────────────────────────────────────────────────
+function startScoring(){
+  // Sync player names from inputs
+  document.querySelectorAll('.ps-input').forEach((inp,i)=>{players[i]=inp.value||`Player ${i+1}`;});
+  scoringStarted=true;
+  rounds=[];
+  addRound();
+  document.getElementById('score-table-wrap').style.display='';
+  document.getElementById('add-round-section').style.display='';
+  renderPlayerSetup();
+  renderScoreTable();
+  checkWinner();
+}
+
+function addRound(){
+  rounds.push({scores:players.map(()=>null)});
+  renderScoreTable();
+  updateRoundInfo();
+  // Scroll to bottom of table
+  setTimeout(()=>{
+    const wrap=document.getElementById('score-table-wrap');
+    if(wrap)wrap.scrollTop=wrap.scrollHeight;
+  },50);
+}
+
+function updateRoundInfo(){
+  const ri=document.getElementById('round-info');
+  if(ri)ri.textContent=`Round ${rounds.length}`;
+}
+
+function onScoreInput(roundIdx,playerIdx,val){
+  if(!rounds[roundIdx])return;
+  rounds[roundIdx].scores[playerIdx]=val===''?null:parseFloat(val)||0;
+  renderTotals();
+  checkWinner();
+}
+
+function getTotal(playerIdx){
+  return rounds.reduce((sum,r)=>{
+    const v=r.scores[playerIdx];
+    return sum+(v!==null?v:0);
+  },0);
+}
+
+function renderScoreTable(){
+  if(!scoringStarted)return;
+  const tbl=document.getElementById('score-table');
+  const colHeaders=players.map((p,i)=>`
+    <th style="color:${playerColor(i)};min-width:70px;">${esc(p)}</th>`).join('');
+
+  let rows='';
+  rounds.forEach((r,ri)=>{
+    rows+=`<tr>
+      <td>Round ${ri+1}</td>
+      ${players.map((p,pi)=>`
+        <td>
+          <input class="score-input" type="number"
+            value="${r.scores[pi]!==null?r.scores[pi]:''}"
+            placeholder="—"
+            oninput="onScoreInput(${ri},${pi},this.value)"
+            style="border-color:${playerColor(pi,0.2)};">
+        </td>`).join('')}
+    </tr>`;
+  });
+
+  // Totals row
+  const totals=players.map((_,i)=>getTotal(i));
+  const maxTotal=Math.max(...totals);
+  const minTotal=Math.min(...totals);
+  rows+=`<tr class="total-row">
+    <td>Total</td>
+    ${totals.map((t,i)=>{
+      const isWinning=currentGame.lowWins?t===minTotal:t===maxTotal;
+      return `<td><div class="total-cell${isWinning?' winning':''}" style="color:${isWinning?'var(--green)':playerColor(i)}">${t}${isWinning?' ★':''}</div></td>`;
+    }).join('')}
+  </tr>`;
+
+  // Target progress row if target exists
+  if(currentGame.target){
+    rows+=`<tr>
+      <td style="color:var(--muted);font-size:10px;">To target</td>
+      ${totals.map((t,i)=>{
+        const remaining=currentGame.lowWins?t:Math.max(0,currentGame.target-t);
+        return `<td style="font-size:11px;color:var(--muted);">${remaining}</td>`;
+      }).join('')}
+    </tr>`;
+  }
+
+  tbl.innerHTML=`<thead><tr><th>Round</th>${colHeaders}</tr></thead><tbody>${rows}</tbody>`;
+  updateRoundInfo();
+}
+
+function renderTotals(){
+  const totals=players.map((_,i)=>getTotal(i));
+  const maxTotal=Math.max(...totals);
+  const minTotal=Math.min(...totals);
+  const cells=document.querySelectorAll('.total-cell');
+  cells.forEach((cell,i)=>{
+    const t=totals[i];
+    const isWinning=currentGame?.lowWins?t===minTotal:t===maxTotal;
+    cell.textContent=t+(isWinning?' ★':'');
+    cell.style.color=isWinning?'var(--green)':playerColor(i);
+  });
+}
+
+function checkWinner(){
+  if(!currentGame?.target||!scoringStarted)return;
+  const totals=players.map((_,i)=>getTotal(i));
+  let winnerIdx=-1;
+  if(currentGame.lowWins){
+    // For countdown games like darts
+    winnerIdx=totals.findIndex(t=>t<=0);
+  }else{
+    winnerIdx=totals.findIndex(t=>t>=currentGame.target);
+  }
+  const banner=document.getElementById('win-banner');
+  if(winnerIdx>=0){
+    document.getElementById('win-name').textContent=`🏆 ${players[winnerIdx]} wins!`;
+    document.getElementById('win-sub').textContent=`Final score: ${totals[winnerIdx]} points`;
+    banner.classList.add('show');
+    document.getElementById('add-round-btn').disabled=true;
+  }else{
+    banner.classList.remove('show');
+    document.getElementById('add-round-btn').disabled=false;
+  }
+}
+
+function resetScore(){
+  if(!currentGame)return;
+  openGame(currentGame.id);
+}
+
+function exportScore(){
+  if(!currentGame)return;
+  const lines=[currentGame.name+' — Score Sheet','Generated: '+new Date().toLocaleString(),'','Players: '+players.join(', '),''];
+  rounds.forEach((r,i)=>{
+    lines.push('Round '+(i+1)+': '+players.map((p,pi)=>p+' '+( r.scores[pi]!==null?r.scores[pi]:'—')).join(' | '));
+  });
+  lines.push('','TOTALS: '+players.map((p,i)=>p+' '+getTotal(i)).join(' | '));
+  const blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=currentGame.name.replace(/\s+/g,'_')+'_scores.txt';a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderLibrary();
+</script>
+</body>
+</html>
